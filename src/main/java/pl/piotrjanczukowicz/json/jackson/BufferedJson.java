@@ -79,19 +79,6 @@ public final class BufferedJson implements AutoCloseable {
     }
 
     /**
-     * Position of the first of {@code fields} that is a top-level property with a value other than {@code null}, found
-     * in a single pass. Only the first occurrence of each property counts, as in {@link #hasNonNull(String)}.
-     *
-     * @param fields property names in priority order
-     * @return index into {@code fields}, or {@code -1} when the value is not an object or none qualifies
-     */
-    public int firstNonNull(final List<String> fields) {
-        try (JsonParser parser = replay()) {
-            return indexOfFirstNonNull(parser, fields);
-        }
-    }
-
-    /**
      * Text of a top-level property.
      *
      * @param field property name
@@ -260,6 +247,19 @@ public final class BufferedJson implements AutoCloseable {
      */
     public DatabindException mismatch(final String message) {
         return DatabindException.from(context, message);
+    }
+
+    /**
+     * Position of the first of {@code fields} that is a top-level property with a value other than {@code null}, found
+     * in a single pass. Only the first occurrence of each property counts, as in {@link #hasNonNull(String)}.
+     *
+     * @param fields property names in priority order
+     * @return index into {@code fields}, or {@code -1} when the value is not an object or none qualifies
+     */
+    int firstNonNull(final List<String> fields) {
+        try (JsonParser parser = replay()) {
+            return indexOfFirstNonNull(parser, fields);
+        }
     }
 
     private <T> @Nullable T readLocated(final String field, final Function<JsonParser, T> reader) {

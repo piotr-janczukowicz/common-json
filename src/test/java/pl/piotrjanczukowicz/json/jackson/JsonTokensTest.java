@@ -56,22 +56,34 @@ class JsonTokensTest {
 
     @Test
     void readUnlessEmptyObject_shouldReturnNull_whenObjectIsEmpty() {
-        assertThat(userMapper().readValue("{}", Probe.class).user()).isNull();
+        final Probe probe = userMapper().readValue("{}", Probe.class);
+
+        assertThat(probe.user()).isNull();
     }
 
     @Test
     void readUnlessEmptyObject_shouldBind_whenObjectHasProperties() {
-        assertThat(userMapper()
-                        .readValue("{\"login\":\"a\",\"id\":3}", Probe.class)
-                        .user())
-                .isEqualTo(new User("a", 3));
+        final Probe probe = userMapper().readValue("{\"login\":\"a\",\"id\":3}", Probe.class);
+
+        assertThat(probe.user()).isEqualTo(new User("a", 3));
     }
 
     @Test
-    void readUnlessEmptyObject_shouldBindNonObject() {
+    void readUnlessEmptyObject_shouldThrowDatabindException_whenValueIsArray() {
         final Throwable thrown = catchThrowable(() -> userMapper().readValue("[]", Probe.class));
 
         assertThat(thrown).isInstanceOf(DatabindException.class);
+    }
+
+    @Test
+    void readUnlessEmptyObject_shouldFailLikeDirectBind_whenObjectMalformed() {
+        final String json = "{\"login\":\"a\",\"id\":\"x\"}";
+        final Throwable direct =
+                catchThrowable(() -> JsonMapper.builder().build().readValue(json, User.class));
+
+        final Throwable thrown = catchThrowable(() -> userMapper().readValue(json, Probe.class));
+
+        assertThat(thrown).isInstanceOf(direct.getClass()).hasMessage(direct.getMessage());
     }
 
     private static JsonMapper userMapper() {

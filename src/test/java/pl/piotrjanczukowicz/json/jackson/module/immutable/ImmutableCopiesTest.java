@@ -2,7 +2,6 @@ package pl.piotrjanczukowicz.json.jackson.module.immutable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -17,46 +16,79 @@ import org.junit.jupiter.api.Test;
 class ImmutableCopiesTest {
 
     @Test
-    void shouldReturnEmptyCollections_whenSourceIsEmpty() {
-        assertSoftly(softly -> {
-            softly.assertThat(ImmutableCopies.list(new ArrayList<>())).isEmpty();
-            softly.assertThat(ImmutableCopies.set(new ArrayList<>())).isEmpty();
-            softly.assertThat(ImmutableCopies.map(new HashMap<>())).isEmpty();
-        });
+    void list_shouldReturnEmpty_whenSourceIsEmpty() {
+        final List<String> result = ImmutableCopies.list(new ArrayList<String>());
+
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void shouldCopyWithoutNulls_whenSourceHasNone() {
-        final Map<String, Integer> map = new HashMap<>(Map.of("a", 1));
+    void set_shouldReturnEmpty_whenSourceIsEmpty() {
+        final Set<String> result = ImmutableCopies.set(new ArrayList<String>());
 
-        assertSoftly(softly -> {
-            softly.assertThat(ImmutableCopies.list(new ArrayList<>(List.of("a", "b"))))
-                    .containsExactly("a", "b");
-            softly.assertThat(ImmutableCopies.set(new ArrayList<>(List.of("a", "a"))))
-                    .containsExactly("a");
-            softly.assertThat(ImmutableCopies.map(map)).containsExactly(Map.entry("a", 1));
-        });
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void shouldDropNulls() {
-        final Map<String, Integer> map = new HashMap<>();
-        map.put("a", 1);
-        map.put("b", null);
+    void map_shouldReturnEmpty_whenSourceIsEmpty() {
+        final Map<String, Integer> result = ImmutableCopies.map(new HashMap<String, Integer>());
 
-        assertSoftly(softly -> {
-            softly.assertThat(ImmutableCopies.list(Arrays.asList("a", null, "b")))
-                    .containsExactly("a", "b");
-            softly.assertThat(ImmutableCopies.set(Arrays.asList("a", null, "a")))
-                    .isEqualTo(Set.of("a"));
-            softly.assertThat(ImmutableCopies.map(map)).containsExactly(Map.entry("a", 1));
-        });
+        assertThat(result).isEmpty();
     }
 
     @Test
-    void shouldReturnUnmodifiableCopies() {
-        final Throwable thrown = catchThrowable(
-                () -> ImmutableCopies.list(Arrays.asList("a", null)).add("c"));
+    void list_shouldKeepOrder_whenSourceHasNoNulls() {
+        final List<String> result = ImmutableCopies.list(new ArrayList<>(List.of("a", "b")));
+
+        assertThat(result).containsExactly("a", "b");
+    }
+
+    @Test
+    void set_shouldDeduplicate_whenSourceHasNoNulls() {
+        final Set<String> result = ImmutableCopies.set(new ArrayList<>(List.of("a", "a")));
+
+        assertThat(result).containsExactly("a");
+    }
+
+    @Test
+    void map_shouldCopyEntries_whenSourceHasNoNulls() {
+        final Map<String, Integer> source = new HashMap<>(Map.of("a", 1));
+
+        final Map<String, Integer> result = ImmutableCopies.map(source);
+
+        assertThat(result).containsExactly(Map.entry("a", 1));
+    }
+
+    @Test
+    void list_shouldDropNulls_whenSourceHasNulls() {
+        final List<String> result = ImmutableCopies.list(Arrays.asList("a", null, "b"));
+
+        assertThat(result).containsExactly("a", "b");
+    }
+
+    @Test
+    void set_shouldDropNulls_whenSourceHasNulls() {
+        final Set<String> result = ImmutableCopies.set(Arrays.asList("a", null, "a"));
+
+        assertThat(result).containsExactly("a");
+    }
+
+    @Test
+    void map_shouldDropNullValues_whenSourceHasNullValues() {
+        final Map<String, Integer> source = new HashMap<>();
+        source.put("a", 1);
+        source.put("b", null);
+
+        final Map<String, Integer> result = ImmutableCopies.map(source);
+
+        assertThat(result).containsExactly(Map.entry("a", 1));
+    }
+
+    @Test
+    void list_shouldBeUnmodifiable_whenSourceHasNulls() {
+        final List<String> copy = ImmutableCopies.list(Arrays.asList("a", null));
+
+        final Throwable thrown = catchThrowable(() -> copy.add("c"));
 
         assertThat(thrown).isInstanceOf(UnsupportedOperationException.class);
     }

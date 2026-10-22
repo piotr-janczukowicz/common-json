@@ -152,34 +152,56 @@ class BufferedJsonTest {
     }
 
     @Test
-    void firstNonNull_shouldPickHighestPriorityPresentField() {
+    void firstNonNull_shouldReturnHighestPriority_whenSeveralFieldsPresent() {
         try (BufferedJson json = capture("{\"b\":{\"x\":[1]},\"c\":1,\"a\":null}")) {
-            assertThat(json.firstNonNull(List.of("a", "b", "c"))).isEqualTo(1);
+            final int index = json.firstNonNull(List.of("a", "b", "c"));
+
+            assertThat(index).isEqualTo(1);
         }
     }
 
     @Test
-    void firstNonNull_shouldStopAtTopPriority() {
+    void firstNonNull_shouldReturnZero_whenTopPriorityFieldPresent() {
         try (BufferedJson json = capture("{\"a\":1,\"b\":2}")) {
-            assertThat(json.firstNonNull(List.of("a", "b"))).isZero();
+            final int index = json.firstNonNull(List.of("a", "b"));
+
+            assertThat(index).isEqualTo(0);
         }
     }
 
     @Test
-    void firstNonNull_shouldOnlyCountFirstOccurrence() {
+    void firstNonNull_shouldReturnMinusOne_whenFirstOccurrenceIsNull() {
         try (BufferedJson json = capture("{\"a\":null,\"a\":1}")) {
-            assertThat(json.firstNonNull(List.of("a"))).isEqualTo(-1);
+            final int index = json.firstNonNull(List.of("a"));
+
+            assertThat(index).isEqualTo(-1);
         }
     }
 
     @Test
-    void firstNonNull_shouldBeMinusOne_whenNoneQualifyOrNotObject() {
-        try (BufferedJson none = capture("{\"z\":1}");
-                BufferedJson array = capture("[1]")) {
-            assertSoftly(softly -> {
-                softly.assertThat(none.firstNonNull(List.of("a"))).isEqualTo(-1);
-                softly.assertThat(array.firstNonNull(List.of("a"))).isEqualTo(-1);
-            });
+    void firstNonNull_shouldReturnMinusOne_whenNoFieldPresent() {
+        try (BufferedJson json = capture("{\"z\":1}")) {
+            final int index = json.firstNonNull(List.of("a"));
+
+            assertThat(index).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    void firstNonNull_shouldReturnMinusOne_whenValueIsNotObject() {
+        try (BufferedJson json = capture("[1]")) {
+            final int index = json.firstNonNull(List.of("a"));
+
+            assertThat(index).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    void firstNonNull_shouldIgnoreNestedProperty_whenNameMatchesField() {
+        try (BufferedJson json = capture("{\"outer\":{\"a\":1}}")) {
+            final int index = json.firstNonNull(List.of("a"));
+
+            assertThat(index).isEqualTo(-1);
         }
     }
 
