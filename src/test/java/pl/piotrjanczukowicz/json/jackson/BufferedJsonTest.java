@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DatabindException;
@@ -16,37 +17,18 @@ class BufferedJsonTest {
 
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
-    @Test
-    void isEmptyObject_shouldBeFalse_whenValueIsNotObject() {
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {"[]|false", "{}|true", "{\"a\":1}|false"})
+    void isEmptyObject_shouldReturnExpected_whenValueVaries(final String input, final boolean expected) {
         final boolean empty;
 
-        try (BufferedJson json = capture("[]")) {
+        try (BufferedJson json = capture(input)) {
             empty = json.isEmptyObject();
         }
 
-        assertThat(empty).isFalse();
-    }
-
-    @Test
-    void isEmptyObject_shouldBeTrue_whenObjectIsEmpty() {
-        final boolean empty;
-
-        try (BufferedJson json = capture("{}")) {
-            empty = json.isEmptyObject();
-        }
-
-        assertThat(empty).isTrue();
-    }
-
-    @Test
-    void isEmptyObject_shouldBeFalse_whenObjectHasProperties() {
-        final boolean empty;
-
-        try (BufferedJson json = capture("{\"a\":1}")) {
-            empty = json.isEmptyObject();
-        }
-
-        assertThat(empty).isFalse();
+        assertThat(empty).isEqualTo(expected);
     }
 
     @Test
@@ -210,47 +192,15 @@ class BufferedJsonTest {
             index = json.firstNonNull(List.of("a", "b"));
         }
 
-        assertThat(index).isEqualTo(0);
+        assertThat(index).isZero();
     }
 
-    @Test
-    void firstNonNull_shouldReturnMinusOne_whenFirstOccurrenceIsNull() {
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"a\":null,\"a\":1}", "{\"z\":1}", "[1]", "{\"outer\":{\"a\":1}}"})
+    void firstNonNull_shouldReturnMinusOne_whenNoTopLevelNonNullField(final String input) {
         final int index;
 
-        try (BufferedJson json = capture("{\"a\":null,\"a\":1}")) {
-            index = json.firstNonNull(List.of("a"));
-        }
-
-        assertThat(index).isEqualTo(-1);
-    }
-
-    @Test
-    void firstNonNull_shouldReturnMinusOne_whenNoFieldPresent() {
-        final int index;
-
-        try (BufferedJson json = capture("{\"z\":1}")) {
-            index = json.firstNonNull(List.of("a"));
-        }
-
-        assertThat(index).isEqualTo(-1);
-    }
-
-    @Test
-    void firstNonNull_shouldReturnMinusOne_whenValueIsNotObject() {
-        final int index;
-
-        try (BufferedJson json = capture("[1]")) {
-            index = json.firstNonNull(List.of("a"));
-        }
-
-        assertThat(index).isEqualTo(-1);
-    }
-
-    @Test
-    void firstNonNull_shouldIgnoreNestedProperty_whenNameMatchesField() {
-        final int index;
-
-        try (BufferedJson json = capture("{\"outer\":{\"a\":1}}")) {
+        try (BufferedJson json = capture(input)) {
             index = json.firstNonNull(List.of("a"));
         }
 

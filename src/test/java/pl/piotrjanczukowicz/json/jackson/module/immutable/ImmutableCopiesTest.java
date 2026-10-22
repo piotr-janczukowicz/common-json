@@ -17,21 +17,21 @@ class ImmutableCopiesTest {
 
     @Test
     void list_shouldReturnEmpty_whenSourceIsEmpty() {
-        final List<String> result = ImmutableCopies.list(new ArrayList<String>());
+        final List<String> result = ImmutableCopies.list(new ArrayList<>());
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void set_shouldReturnEmpty_whenSourceIsEmpty() {
-        final Set<String> result = ImmutableCopies.set(new ArrayList<String>());
+        final Set<String> result = ImmutableCopies.set(new ArrayList<>());
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void map_shouldReturnEmpty_whenSourceIsEmpty() {
-        final Map<String, Integer> result = ImmutableCopies.map(new HashMap<String, Integer>());
+        final Map<String, Integer> result = ImmutableCopies.map(new HashMap<>());
 
         assertThat(result).isEmpty();
     }
