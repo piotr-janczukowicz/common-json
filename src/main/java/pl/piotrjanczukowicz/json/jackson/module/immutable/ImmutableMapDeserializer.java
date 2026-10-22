@@ -2,7 +2,6 @@ package pl.piotrjanczukowicz.json.jackson.module.immutable;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ValueDeserializer;
@@ -24,9 +23,7 @@ final class ImmutableMapDeserializer extends ImmutableCollectionDeserializer {
     @Override
     public Object deserialize(final JsonParser parser, final DeserializationContext context) {
         final Map<?, ?> source = (Map<?, ?>) _delegatee.deserialize(parser, context);
-        return source.entrySet().stream()
-                .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
+        return ImmutableCopies.map(source);
     }
 
     @Override

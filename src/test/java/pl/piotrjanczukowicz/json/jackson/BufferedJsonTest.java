@@ -152,6 +152,38 @@ class BufferedJsonTest {
     }
 
     @Test
+    void firstNonNull_shouldPickHighestPriorityPresentField() {
+        try (BufferedJson json = capture("{\"b\":{\"x\":[1]},\"c\":1,\"a\":null}")) {
+            assertThat(json.firstNonNull(List.of("a", "b", "c"))).isEqualTo(1);
+        }
+    }
+
+    @Test
+    void firstNonNull_shouldStopAtTopPriority() {
+        try (BufferedJson json = capture("{\"a\":1,\"b\":2}")) {
+            assertThat(json.firstNonNull(List.of("a", "b"))).isZero();
+        }
+    }
+
+    @Test
+    void firstNonNull_shouldOnlyCountFirstOccurrence() {
+        try (BufferedJson json = capture("{\"a\":null,\"a\":1}")) {
+            assertThat(json.firstNonNull(List.of("a"))).isEqualTo(-1);
+        }
+    }
+
+    @Test
+    void firstNonNull_shouldBeMinusOne_whenNoneQualifyOrNotObject() {
+        try (BufferedJson none = capture("{\"z\":1}");
+                BufferedJson array = capture("[1]")) {
+            assertSoftly(softly -> {
+                softly.assertThat(none.firstNonNull(List.of("a"))).isEqualTo(-1);
+                softly.assertThat(array.firstNonNull(List.of("a"))).isEqualTo(-1);
+            });
+        }
+    }
+
+    @Test
     void hasNonNull_shouldBeFalse_whenFieldIsJsonNull() {
         try (BufferedJson json = capture("{\"field\":null}")) {
             assertThat(json.hasNonNull("field")).isFalse();

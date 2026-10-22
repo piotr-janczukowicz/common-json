@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Test;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 class JsonTokensTest {
 
@@ -37,6 +41,43 @@ class JsonTokensTest {
                 catchThrowable(() -> JsonTokens.requireToken(PARSER, null, JsonToken.END_ARRAY, "must end the array"));
 
         assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageStartingWith("must end the array");
+    }
+
+    record User(String login, int id) {}
+
+    record Probe(User user) {}
+
+    private static final class EmptyAsNull extends ValueDeserializer<Probe> {
+        @Override
+        public Probe deserialize(final JsonParser parser, final DeserializationContext context) {
+            return new Probe(JsonTokens.readUnlessEmptyObject(parser, context, User.class));
+        }
+    }
+
+    @Test
+    void readUnlessEmptyObject_shouldReturnNull_whenObjectIsEmpty() {
+        assertThat(userMapper().readValue("{}", Probe.class).user()).isNull();
+    }
+
+    @Test
+    void readUnlessEmptyObject_shouldBind_whenObjectHasProperties() {
+        assertThat(userMapper()
+                        .readValue("{\"login\":\"a\",\"id\":3}", Probe.class)
+                        .user())
+                .isEqualTo(new User("a", 3));
+    }
+
+    @Test
+    void readUnlessEmptyObject_shouldBindNonObject() {
+        final Throwable thrown = catchThrowable(() -> userMapper().readValue("[]", Probe.class));
+
+        assertThat(thrown).isInstanceOf(DatabindException.class);
+    }
+
+    private static JsonMapper userMapper() {
+        return JsonMapper.builder()
+                .addModule(new SimpleModule().addDeserializer(Probe.class, new EmptyAsNull()))
+                .build();
     }
 
     @Test

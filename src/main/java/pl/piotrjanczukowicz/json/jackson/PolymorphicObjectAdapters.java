@@ -80,10 +80,6 @@ public final class PolymorphicObjectAdapters {
             this.wrap = wrap;
         }
 
-        private boolean isPresentIn(final BufferedJson json) {
-            return json.hasNonNull(field);
-        }
-
         private T readFrom(final BufferedJson json) {
             return wrap.apply(json.read(valueType));
         }
@@ -108,12 +104,14 @@ public final class PolymorphicObjectAdapters {
 
         private final String unknownShape;
         private final List<Branch<T>> branches;
+        private final List<String> fields;
 
         private FieldBranchDeserializer(
                 final Class<T> type, final String unknownShape, final List<Branch<T>> branches) {
             super(type);
             this.unknownShape = unknownShape;
             this.branches = branches;
+            this.fields = branches.stream().map(branch -> branch.field).toList();
         }
 
         @Override
@@ -124,12 +122,11 @@ public final class PolymorphicObjectAdapters {
         }
 
         private T read(final BufferedJson json) {
-            for (final Branch<T> branch : branches) {
-                if (branch.isPresentIn(json)) {
-                    return branch.readFrom(json);
-                }
+            final int index = json.firstNonNull(fields);
+            if (index < 0) {
+                throw json.mismatch(unknownShape);
             }
-            throw json.mismatch(unknownShape);
+            return branches.get(index).readFrom(json);
         }
     }
 }

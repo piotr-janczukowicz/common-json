@@ -2,7 +2,6 @@ package pl.piotrjanczukowicz.json.jackson.module.immutable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
@@ -25,7 +24,7 @@ final class ImmutableListDeserializer extends ImmutableCollectionDeserializer {
     @Override
     public Object deserialize(final JsonParser parser, final DeserializationContext context) {
         final Collection<?> source = (Collection<?>) _delegatee.deserialize(parser, context);
-        return source.stream().filter(Objects::nonNull).toList();
+        return ImmutableCopies.list(source);
     }
 
     @Override

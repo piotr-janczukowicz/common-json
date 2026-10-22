@@ -1,5 +1,6 @@
 package pl.piotrjanczukowicz.json.jackson;
 
+import java.util.List;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
 import tools.jackson.core.JsonParser;
@@ -74,6 +75,19 @@ public final class BufferedJson implements AutoCloseable {
     public boolean hasNonNull(final String field) {
         try (JsonParser parser = replay()) {
             return seek(parser, field) && parser.currentToken() != JsonToken.VALUE_NULL;
+        }
+    }
+
+    /**
+     * Position of the first of {@code fields} that is a top-level property with a value other than {@code null}, found
+     * in a single pass. Only the first occurrence of each property counts, as in {@link #hasNonNull(String)}.
+     *
+     * @param fields property names in priority order
+     * @return index into {@code fields}, or {@code -1} when the value is not an object or none qualifies
+     */
+    public int firstNonNull(final List<String> fields) {
+        try (JsonParser parser = replay()) {
+            return indexOfFirstNonNull(parser, fields);
         }
     }
 
@@ -281,6 +295,29 @@ public final class BufferedJson implements AutoCloseable {
 
     private JsonParser replay() {
         return buffer.asParserOnFirstToken(context);
+    }
+
+    private static int indexOfFirstNonNull(final JsonParser parser, final List<String> fields) {
+        if (parser.currentToken() != JsonToken.START_OBJECT) {
+            return -1;
+        }
+        final boolean[] seen = new boolean[fields.size()];
+        int best = -1;
+        while (parser.nextToken() != JsonToken.END_OBJECT) {
+            final int index = fields.indexOf(parser.currentName());
+            final boolean fresh = index >= 0 && !seen[index];
+            if (fresh) {
+                seen[index] = true;
+            }
+            if (parser.nextToken() != JsonToken.VALUE_NULL && fresh && (best < 0 || index < best)) {
+                best = index;
+                if (best == 0) {
+                    return best;
+                }
+            }
+            parser.skipChildren();
+        }
+        return best;
     }
 
     private static boolean seek(final JsonParser parser, final String field) {
