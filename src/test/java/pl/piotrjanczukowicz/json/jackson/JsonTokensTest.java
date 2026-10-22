@@ -43,34 +43,29 @@ class JsonTokensTest {
         assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageStartingWith("must end the array");
     }
 
-    record User(String login, int id) {}
-
-    record Probe(User user) {}
-
-    private static final class EmptyAsNull extends ValueDeserializer<Probe> {
-        @Override
-        public Probe deserialize(final JsonParser parser, final DeserializationContext context) {
-            return new Probe(JsonTokens.readUnlessEmptyObject(parser, context, User.class));
-        }
-    }
-
     @Test
     void readUnlessEmptyObject_shouldReturnNull_whenObjectIsEmpty() {
-        final Probe probe = userMapper().readValue("{}", Probe.class);
+        final JsonMapper mapper = userMapper();
+
+        final Probe probe = mapper.readValue("{}", Probe.class);
 
         assertThat(probe.user()).isNull();
     }
 
     @Test
     void readUnlessEmptyObject_shouldBind_whenObjectHasProperties() {
-        final Probe probe = userMapper().readValue("{\"login\":\"a\",\"id\":3}", Probe.class);
+        final JsonMapper mapper = userMapper();
+
+        final Probe probe = mapper.readValue("{\"login\":\"a\",\"id\":3}", Probe.class);
 
         assertThat(probe.user()).isEqualTo(new User("a", 3));
     }
 
     @Test
     void readUnlessEmptyObject_shouldThrowDatabindException_whenValueIsArray() {
-        final Throwable thrown = catchThrowable(() -> userMapper().readValue("[]", Probe.class));
+        final JsonMapper mapper = userMapper();
+
+        final Throwable thrown = catchThrowable(() -> mapper.readValue("[]", Probe.class));
 
         assertThat(thrown).isInstanceOf(DatabindException.class);
     }
@@ -78,18 +73,13 @@ class JsonTokensTest {
     @Test
     void readUnlessEmptyObject_shouldFailLikeDirectBind_whenObjectMalformed() {
         final String json = "{\"login\":\"a\",\"id\":\"x\"}";
-        final Throwable direct =
-                catchThrowable(() -> JsonMapper.builder().build().readValue(json, User.class));
+        final JsonMapper plain = JsonMapper.builder().build();
+        final JsonMapper mapper = userMapper();
 
-        final Throwable thrown = catchThrowable(() -> userMapper().readValue(json, Probe.class));
+        final Throwable direct = catchThrowable(() -> plain.readValue(json, User.class));
+        final Throwable thrown = catchThrowable(() -> mapper.readValue(json, Probe.class));
 
         assertThat(thrown).isInstanceOf(direct.getClass()).hasMessage(direct.getMessage());
-    }
-
-    private static JsonMapper userMapper() {
-        return JsonMapper.builder()
-                .addModule(new SimpleModule().addDeserializer(Probe.class, new EmptyAsNull()))
-                .build();
     }
 
     @Test
@@ -102,5 +92,22 @@ class JsonTokensTest {
         assertThat(thrown)
                 .isInstanceOf(InvocationTargetException.class)
                 .hasCauseInstanceOf(UnsupportedOperationException.class);
+    }
+
+    private static JsonMapper userMapper() {
+        return JsonMapper.builder()
+                .addModule(new SimpleModule().addDeserializer(Probe.class, new EmptyAsNull()))
+                .build();
+    }
+
+    record User(String login, int id) {}
+
+    record Probe(User user) {}
+
+    private static final class EmptyAsNull extends ValueDeserializer<Probe> {
+        @Override
+        public Probe deserialize(final JsonParser parser, final DeserializationContext context) {
+            return new Probe(JsonTokens.readUnlessEmptyObject(parser, context, User.class));
+        }
     }
 }

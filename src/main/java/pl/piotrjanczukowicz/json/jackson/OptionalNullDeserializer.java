@@ -32,7 +32,7 @@ public final class OptionalNullDeserializer extends StdDeserializer<OptionalNull
     @SuppressWarnings("PMD.LawOfDemeter")
     public ValueDeserializer<?> createContextual(
             final DeserializationContext context, final @Nullable BeanProperty property) {
-        final JavaType wrapperType = property != null ? property.getType() : context.getContextualType();
+        final JavaType wrapperType = property == null ? context.getContextualType() : property.getType();
         if (wrapperType == null) {
             throw DatabindException.from(context, "Cannot resolve the value type of an OptionalNull without a type");
         }

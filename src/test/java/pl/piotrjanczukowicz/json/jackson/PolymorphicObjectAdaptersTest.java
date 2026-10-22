@@ -25,19 +25,28 @@ class PolymorphicObjectAdaptersTest {
     }
 
     @Test
-    void deserialize_shouldPickTheBranchWhoseFieldIsPresent_whenValueMatches() {
+    void deserialize_shouldPickCircle_whenRadiusPresent() {
         final JsonMapper mapper = mapper();
 
         final Shape circle = mapper.readValue("{\"radius\":2}", Shape.class);
-        final Shape square = mapper.readValue("{\"side\":3}", Shape.class);
 
         assertThat(circle).isEqualTo(new Circle(new CircleBody(2)));
+    }
+
+    @Test
+    void deserialize_shouldPickSquare_whenSidePresent() {
+        final JsonMapper mapper = mapper();
+
+        final Shape square = mapper.readValue("{\"side\":3}", Shape.class);
+
         assertThat(square).isEqualTo(new Square(new SquareBody(3)));
     }
 
     @Test
-    void deserialize_shouldPickTheFirstBranch_whenSeveralFieldsArePresent() {
-        final Shape shape = mapper().readValue("{\"side\":3,\"radius\":2}", Shape.class);
+    void deserialize_shouldPickFirstBranch_whenSeveralFieldsArePresent() {
+        final JsonMapper mapper = mapper();
+
+        final Shape shape = mapper.readValue("{\"side\":3,\"radius\":2}", Shape.class);
 
         assertThat(shape).isInstanceOf(Circle.class);
     }
@@ -55,7 +64,8 @@ class PolymorphicObjectAdaptersTest {
     void serialize_shouldWriteTheUnwrappedObject_whenUnionIsWritten() {
         final JsonMapper mapper = mapper();
 
-        final Object written = mapper.readValue(mapper.writeValueAsBytes(new Square(new SquareBody(3))), Object.class);
+        final byte[] json = mapper.writeValueAsBytes(new Square(new SquareBody(3)));
+        final Object written = mapper.readValue(json, Object.class);
 
         assertThat(written).isEqualTo(Map.of("side", 3));
     }

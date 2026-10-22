@@ -54,7 +54,9 @@ class StringOrObjectAdaptersTest {
     @SuppressWarnings("unused")
     void decode_shouldReturnValue_whenJsonMatches(
             final Class<?> type, final Object expected, final String json, final Object wire) {
-        final Object decoded = CODEC.decode(json.getBytes(StandardCharsets.UTF_8), type);
+        final byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+
+        final Object decoded = CODEC.decode(bytes, type);
 
         assertThat(decoded).isEqualTo(expected);
     }
@@ -64,9 +66,20 @@ class StringOrObjectAdaptersTest {
     @SuppressWarnings("unused")
     void encode_shouldWriteWireForm_whenValueProvided(
             final Class<?> type, final Object value, final String json, final Object wire) {
-        final Object encoded = CODEC.decode(CODEC.encode(value), Object.class);
+        final byte[] encoded = CODEC.encode(value);
 
-        assertThat(encoded).isEqualTo(wire);
+        final Object decoded = CODEC.decode(encoded, Object.class);
+
+        assertThat(decoded).isEqualTo(wire);
+    }
+
+    @Test
+    void encode_shouldFail_whenUnionHasNeitherScalarNorDetails() {
+        final Label label = new Label(null, null);
+
+        final Throwable thrown = catchThrowable(() -> CODEC.encode(label));
+
+        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("details");
     }
 
     @Test
@@ -159,12 +172,5 @@ class StringOrObjectAdaptersTest {
         static Payload ofObject(final Map<String, Object> object) {
             return new Payload(null, object);
         }
-    }
-
-    @Test
-    void encode_shouldFail_whenUnionHasNeitherScalarNorDetails() {
-        final Throwable thrown = catchThrowable(() -> CODEC.encode(new Label(null, null)));
-
-        assertThat(thrown).isInstanceOf(NullPointerException.class).hasMessageContaining("details");
     }
 }

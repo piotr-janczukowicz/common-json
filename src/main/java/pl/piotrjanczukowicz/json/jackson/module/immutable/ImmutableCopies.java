@@ -29,7 +29,7 @@ final class ImmutableCopies {
             return Set.of();
         }
         if (hasNull(source)) {
-            return Set.copyOf(withoutNulls(new HashSet<>(), source));
+            return Set.copyOf(withoutNulls(HashSet.newHashSet(source.size()), source));
         }
         return Set.copyOf(source);
     }

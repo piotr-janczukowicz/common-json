@@ -23,20 +23,6 @@ class ImmutableCollectionsModuleTest {
     private static final ObjectMapper MAPPER =
             JsonMapper.builder().addModule(new ImmutableCollectionsModule()).build();
 
-    enum Level {
-        LOW,
-        HIGH
-    }
-
-    record Item(String name) {}
-
-    record Holder(
-            List<Item> items,
-            Set<String> tags,
-            Map<String, Integer> counts,
-            Collection<String> values,
-            ArrayList<String> mutable) {}
-
     @Test
     void readValue_shouldReturnTypedList_whenJsonArrayOfObjects() {
         final List<Item> items = MAPPER.readValue("[{\"name\":\"a\"}]", new TypeReference<>() {});
@@ -144,8 +130,9 @@ class ImmutableCollectionsModuleTest {
     @Test
     void readValue_shouldReturnUnmodifiableList_whenTypeIsCollection() {
         final Holder holder = MAPPER.readValue("{\"values\":[\"a\"]}", Holder.class);
+        final Collection<String> values = holder.values();
 
-        final Throwable thrown = catchThrowable(() -> holder.values().add("b"));
+        final Throwable thrown = catchThrowable(() -> values.add("b"));
 
         assertThat(thrown).isInstanceOf(UnsupportedOperationException.class);
     }
@@ -178,7 +165,7 @@ class ImmutableCollectionsModuleTest {
     }
 
     @Test
-    void getEmptyValue_shouldReturnEmptyList_whenCalled() {
+    void getEmptyValue_shouldReturnEmptyList() {
         final ImmutableListDeserializer deserializer = new ImmutableListDeserializer(delegateFor(List.class));
 
         final Object value = deserializer.getEmptyValue(MAPPER._deserializationContext());
@@ -187,7 +174,7 @@ class ImmutableCollectionsModuleTest {
     }
 
     @Test
-    void getEmptyValue_shouldReturnEmptySet_whenCalled() {
+    void getEmptyValue_shouldReturnEmptySet() {
         final ImmutableSetDeserializer deserializer = new ImmutableSetDeserializer(delegateFor(Set.class));
 
         final Object value = deserializer.getEmptyValue(MAPPER._deserializationContext());
@@ -196,7 +183,7 @@ class ImmutableCollectionsModuleTest {
     }
 
     @Test
-    void getEmptyValue_shouldReturnEmptyMap_whenCalled() {
+    void getEmptyValue_shouldReturnEmptyMap() {
         final ImmutableMapDeserializer deserializer = new ImmutableMapDeserializer(delegateFor(Map.class));
 
         final Object value = deserializer.getEmptyValue(MAPPER._deserializationContext());
@@ -208,4 +195,18 @@ class ImmutableCollectionsModuleTest {
         final JavaType type = MAPPER.getTypeFactory().constructType(rawClass);
         return MAPPER._deserializationContext().findRootValueDeserializer(type);
     }
+
+    enum Level {
+        LOW,
+        HIGH
+    }
+
+    record Item(String name) {}
+
+    record Holder(
+            List<Item> items,
+            Set<String> tags,
+            Map<String, Integer> counts,
+            Collection<String> values,
+            ArrayList<String> mutable) {}
 }

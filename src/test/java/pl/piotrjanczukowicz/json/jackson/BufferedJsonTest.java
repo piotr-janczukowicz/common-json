@@ -2,10 +2,11 @@ package pl.piotrjanczukowicz.json.jackson;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.JavaType;
@@ -17,206 +18,323 @@ class BufferedJsonTest {
 
     @Test
     void isEmptyObject_shouldBeFalse_whenValueIsNotObject() {
+        final boolean empty;
+
         try (BufferedJson json = capture("[]")) {
-            assertThat(json.isEmptyObject()).isFalse();
+            empty = json.isEmptyObject();
         }
+
+        assertThat(empty).isFalse();
+    }
+
+    @Test
+    void isEmptyObject_shouldBeTrue_whenObjectIsEmpty() {
+        final boolean empty;
+
+        try (BufferedJson json = capture("{}")) {
+            empty = json.isEmptyObject();
+        }
+
+        assertThat(empty).isTrue();
+    }
+
+    @Test
+    void isEmptyObject_shouldBeFalse_whenObjectHasProperties() {
+        final boolean empty;
+
+        try (BufferedJson json = capture("{\"a\":1}")) {
+            empty = json.isEmptyObject();
+        }
+
+        assertThat(empty).isFalse();
     }
 
     @Test
     void hasField_shouldBeFalse_whenValueIsNotObject() {
+        final boolean present;
+
         try (BufferedJson json = capture("null")) {
-            assertThat(json.hasField("field")).isFalse();
+            present = json.hasField("field");
         }
+
+        assertThat(present).isFalse();
     }
 
     @Test
     void requiredText_shouldThrow_whenFieldMissing() {
-        try (BufferedJson json = capture("{\"a\":\"x\"}")) {
-            final Throwable thrown = catchThrowable(() -> json.requiredText("missing"));
+        final Throwable thrown;
 
-            assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("missing");
+        try (BufferedJson json = capture("{\"a\":\"x\"}")) {
+            thrown = catchThrowable(() -> json.requiredText("missing"));
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("missing");
     }
 
-    @Test
-    void requiredText_shouldSayWrongShape_whenFieldIsObjectOrArray() {
-        try (BufferedJson object = capture("{\"a\":{}}");
-                BufferedJson array = capture("{\"a\":[]}")) {
-            final Throwable fromObject = catchThrowable(() -> object.requiredText("a"));
-            final Throwable fromArray = catchThrowable(() -> array.requiredText("a"));
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"a\":{}}", "{\"a\":[]}"})
+    void requiredText_shouldSayWrongShape_whenFieldIsObjectOrArray(final String input) {
+        final Throwable thrown;
 
-            assertThat(fromObject)
-                    .isInstanceOf(DatabindException.class)
-                    .hasMessageContaining("must be a string, a number or a boolean");
-            assertThat(fromArray)
-                    .isInstanceOf(DatabindException.class)
-                    .hasMessageContaining("must be a string, a number or a boolean");
+        try (BufferedJson json = capture(input)) {
+            thrown = catchThrowable(() -> json.requiredText("a"));
         }
+
+        assertThat(thrown)
+                .isInstanceOf(DatabindException.class)
+                .hasMessageContaining("must be a string, a number or a boolean");
     }
 
     @Test
     void requiredText_shouldSayMissing_whenFieldIsNull() {
+        final Throwable thrown;
+
         try (BufferedJson json = capture("{\"a\":null}")) {
-            final Throwable thrown = catchThrowable(() -> json.requiredText("a"));
-
-            assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("Missing required field a");
+            thrown = catchThrowable(() -> json.requiredText("a"));
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("Missing required field a");
     }
 
-    @Test
-    void requiredLong_shouldThrow_whenFieldMissingOrNull() {
-        try (BufferedJson missing = capture("{}");
-                BufferedJson nil = capture("{\"n\":null}")) {
-            final Throwable thrown = catchThrowable(() -> missing.requiredLong("n"));
+    @ParameterizedTest
+    @ValueSource(strings = {"{}", "{\"n\":null}"})
+    void requiredLong_shouldThrow_whenFieldMissingOrNull(final String input) {
+        final Throwable thrown;
 
-            assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("n");
-            assertThat(catchThrowable(() -> nil.requiredLong("n")))
-                    .isInstanceOf(DatabindException.class)
-                    .hasMessageContaining("n");
+        try (BufferedJson json = capture(input)) {
+            thrown = catchThrowable(() -> json.requiredLong("n"));
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("n");
     }
 
-    @Test
-    void requiredLong_shouldThrow_whenValueIsNotAnInteger() {
-        try (BufferedJson fraction = capture("{\"n\":1.9}");
-                BufferedJson text = capture("{\"n\":\"12\"}")) {
-            final Throwable fractionFailure = catchThrowable(() -> fraction.requiredLong("n"));
-            final Throwable textFailure = catchThrowable(() -> text.requiredLong("n"));
+    @ParameterizedTest
+    @ValueSource(strings = {"{\"n\":1.9}", "{\"n\":\"12\"}"})
+    void requiredLong_shouldThrow_whenValueIsNotAnInteger(final String input) {
+        final Throwable thrown;
 
-            assertSoftly(softly -> {
-                softly.assertThat(fractionFailure)
-                        .isInstanceOf(DatabindException.class)
-                        .hasMessageContaining("must be an integer");
-                softly.assertThat(textFailure)
-                        .isInstanceOf(DatabindException.class)
-                        .hasMessageContaining("must be an integer");
-            });
+        try (BufferedJson json = capture(input)) {
+            thrown = catchThrowable(() -> json.requiredLong("n"));
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("must be an integer");
     }
 
     @Test
     void requiredLong_shouldReturnValue_whenValueIsAnInteger() {
+        final long value;
+
         try (BufferedJson json = capture("{\"n\":12}")) {
-            assertThat(json.requiredLong("n")).isEqualTo(12L);
+            value = json.requiredLong("n");
         }
+
+        assertThat(value).isEqualTo(12L);
     }
 
     @Test
     void requiredWire_shouldReturnConstant_whenValueKnown() {
-        try (BufferedJson json = capture("{\"kind\":\"a\"}")) {
-            final String converted = json.requiredWire("kind", String::toUpperCase);
+        final String converted;
 
-            assertThat(converted).isEqualTo("A");
+        try (BufferedJson json = capture("{\"kind\":\"a\"}")) {
+            converted = json.requiredWire("kind", String::toUpperCase);
         }
+
+        assertThat(converted).isEqualTo("A");
     }
 
     @Test
     void requiredWire_shouldThrowDatabindException_whenConverterRejectsValue() {
+        final Throwable thrown;
+
         try (BufferedJson json = capture("{\"kind\":\"zzz\"}")) {
-            final Throwable thrown = catchThrowable(() -> json.requiredWire("kind", value -> {
+            thrown = catchThrowable(() -> json.requiredWire("kind", value -> {
                 throw new IllegalArgumentException("Unknown kind: " + value);
             }));
-
-            assertThat(thrown)
-                    .isInstanceOf(DatabindException.class)
-                    .hasMessageStartingWith("Unknown kind: zzz")
-                    .hasCauseInstanceOf(IllegalArgumentException.class);
         }
+
+        assertThat(thrown)
+                .isInstanceOf(DatabindException.class)
+                .hasMessageStartingWith("Unknown kind: zzz")
+                .hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void requiredWire_shouldThrowDatabindException_whenFieldMissing() {
-        try (BufferedJson json = capture("{}")) {
-            final Throwable thrown = catchThrowable(() -> json.requiredWire("kind", String::toUpperCase));
+        final Throwable thrown;
 
-            assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("kind");
+        try (BufferedJson json = capture("{}")) {
+            thrown = catchThrowable(() -> json.requiredWire("kind", String::toUpperCase));
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("kind");
     }
 
     @Test
-    void mismatch_shouldReturnDatabindException_whenCalled() {
+    void mismatch_shouldReturnDatabindException() {
+        final DatabindException mismatch;
+
         try (BufferedJson json = capture("{}")) {
-            assertThat(json.mismatch("unexpected shape"))
-                    .isInstanceOf(DatabindException.class)
-                    .hasMessageStartingWith("unexpected shape");
+            mismatch = json.mismatch("unexpected shape");
         }
+
+        assertThat(mismatch).isInstanceOf(DatabindException.class).hasMessageStartingWith("unexpected shape");
     }
 
     @Test
     void readRequiredField_shouldThrow_whenFieldMissing() {
-        try (BufferedJson json = capture("{}")) {
-            final Throwable thrown = catchThrowable(() -> json.readRequiredField("field", String.class));
+        final Throwable thrown;
 
-            assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("field");
+        try (BufferedJson json = capture("{}")) {
+            thrown = catchThrowable(() -> json.readRequiredField("field", String.class));
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("field");
     }
 
     @Test
     void firstNonNull_shouldReturnHighestPriority_whenSeveralFieldsPresent() {
-        try (BufferedJson json = capture("{\"b\":{\"x\":[1]},\"c\":1,\"a\":null}")) {
-            final int index = json.firstNonNull(List.of("a", "b", "c"));
+        final int index;
 
-            assertThat(index).isEqualTo(1);
+        try (BufferedJson json = capture("{\"b\":{\"x\":[1]},\"c\":1,\"a\":null}")) {
+            index = json.firstNonNull(List.of("a", "b", "c"));
         }
+
+        assertThat(index).isEqualTo(1);
     }
 
     @Test
     void firstNonNull_shouldReturnZero_whenTopPriorityFieldPresent() {
-        try (BufferedJson json = capture("{\"a\":1,\"b\":2}")) {
-            final int index = json.firstNonNull(List.of("a", "b"));
+        final int index;
 
-            assertThat(index).isEqualTo(0);
+        try (BufferedJson json = capture("{\"a\":1,\"b\":2}")) {
+            index = json.firstNonNull(List.of("a", "b"));
         }
+
+        assertThat(index).isEqualTo(0);
     }
 
     @Test
     void firstNonNull_shouldReturnMinusOne_whenFirstOccurrenceIsNull() {
-        try (BufferedJson json = capture("{\"a\":null,\"a\":1}")) {
-            final int index = json.firstNonNull(List.of("a"));
+        final int index;
 
-            assertThat(index).isEqualTo(-1);
+        try (BufferedJson json = capture("{\"a\":null,\"a\":1}")) {
+            index = json.firstNonNull(List.of("a"));
         }
+
+        assertThat(index).isEqualTo(-1);
     }
 
     @Test
     void firstNonNull_shouldReturnMinusOne_whenNoFieldPresent() {
-        try (BufferedJson json = capture("{\"z\":1}")) {
-            final int index = json.firstNonNull(List.of("a"));
+        final int index;
 
-            assertThat(index).isEqualTo(-1);
+        try (BufferedJson json = capture("{\"z\":1}")) {
+            index = json.firstNonNull(List.of("a"));
         }
+
+        assertThat(index).isEqualTo(-1);
     }
 
     @Test
     void firstNonNull_shouldReturnMinusOne_whenValueIsNotObject() {
-        try (BufferedJson json = capture("[1]")) {
-            final int index = json.firstNonNull(List.of("a"));
+        final int index;
 
-            assertThat(index).isEqualTo(-1);
+        try (BufferedJson json = capture("[1]")) {
+            index = json.firstNonNull(List.of("a"));
         }
+
+        assertThat(index).isEqualTo(-1);
     }
 
     @Test
     void firstNonNull_shouldIgnoreNestedProperty_whenNameMatchesField() {
-        try (BufferedJson json = capture("{\"outer\":{\"a\":1}}")) {
-            final int index = json.firstNonNull(List.of("a"));
+        final int index;
 
-            assertThat(index).isEqualTo(-1);
+        try (BufferedJson json = capture("{\"outer\":{\"a\":1}}")) {
+            index = json.firstNonNull(List.of("a"));
         }
+
+        assertThat(index).isEqualTo(-1);
     }
 
     @Test
     void hasNonNull_shouldBeFalse_whenFieldIsJsonNull() {
+        final boolean present;
+
         try (BufferedJson json = capture("{\"field\":null}")) {
-            assertThat(json.hasNonNull("field")).isFalse();
+            present = json.hasNonNull("field");
         }
+
+        assertThat(present).isFalse();
     }
 
     @Test
     void readField_shouldReturnNull_whenFieldIsJsonNull() {
+        final String value;
+
         try (BufferedJson json = capture("{\"field\":null}")) {
-            assertThat(json.readField("field", String.class)).isNull();
+            value = json.readField("field", String.class);
         }
+
+        assertThat(value).isNull();
+    }
+
+    @Test
+    void readReplacingText_shouldReplaceTheField_whenItIsPresent() {
+        final Tagged tagged;
+
+        try (BufferedJson json = capture("{\"kind\":\"old\",\"n\":1}")) {
+            tagged = json.readReplacingText("kind", "new", Tagged.class);
+        }
+
+        assertThat(tagged).isEqualTo(new Tagged("new", 1));
+    }
+
+    @Test
+    void readReplacingText_shouldAddTheField_whenItIsAbsent() {
+        final Tagged tagged;
+
+        try (BufferedJson json = capture("{\"n\":2}")) {
+            tagged = json.readReplacingText("kind", "added", Tagged.class);
+        }
+
+        assertThat(tagged).isEqualTo(new Tagged("added", 2));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[1]", "\"text\""})
+    void readReplacingText_shouldThrow_whenValueIsNotObject(final String input) {
+        final Throwable thrown;
+
+        try (BufferedJson json = capture(input)) {
+            thrown = catchThrowable(() -> json.readReplacingText("a", "x", String.class));
+        }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("Expected an object");
+    }
+
+    @Test
+    void readField_shouldBindGenericType_whenFieldPresent() {
+        final JavaType type = MAPPER.constructType(List.class);
+
+        final Object value;
+
+        try (BufferedJson json = capture("{\"a\":[1,2]}")) {
+            value = json.readField("a", type);
+        }
+
+        assertThat(value).isEqualTo(List.of(1, 2));
+    }
+
+    @Test
+    void readRequiredField_shouldReturnValue_whenFieldPresent() {
+        final String value;
+
+        try (BufferedJson json = capture("{\"a\":\"x\"}")) {
+            value = json.readRequiredField("a", String.class);
+        }
+
+        assertThat(value).isEqualTo("x");
     }
 
     private static BufferedJson capture(final String json) {
@@ -226,63 +344,5 @@ class BufferedJsonTest {
         }
     }
 
-    @Test
-    void readReplacingText_shouldReplaceTheField_whenItIsPresent() {
-        try (BufferedJson json = capture("{\"kind\":\"old\",\"n\":1}")) {
-            final Tagged tagged = json.readReplacingText("kind", "new", Tagged.class);
-
-            assertThat(tagged).isEqualTo(new Tagged("new", 1));
-        }
-    }
-
-    @Test
-    void readReplacingText_shouldAddTheField_whenItIsAbsent() {
-        try (BufferedJson json = capture("{\"n\":2}")) {
-            final Tagged tagged = json.readReplacingText("kind", "added", Tagged.class);
-
-            assertThat(tagged).isEqualTo(new Tagged("added", 2));
-        }
-    }
-
     private record Tagged(String kind, int n) {}
-
-    @Test
-    void isEmptyObject_shouldBeTrueOnlyForEmptyObject() {
-        try (BufferedJson empty = capture("{}");
-                BufferedJson filled = capture("{\"a\":1}")) {
-            assertThat(empty.isEmptyObject()).isTrue();
-            assertThat(filled.isEmptyObject()).isFalse();
-        }
-    }
-
-    @Test
-    void readField_shouldBindGenericType_whenFieldPresent() {
-        final JavaType type = MAPPER.constructType(List.class);
-        try (BufferedJson json = capture("{\"a\":[1,2]}")) {
-            final Object value = json.readField("a", type);
-
-            assertThat(value).isEqualTo(List.of(1, 2));
-        }
-    }
-
-    @Test
-    void readRequiredField_shouldReturnValue_whenFieldPresent() {
-        try (BufferedJson json = capture("{\"a\":\"x\"}")) {
-            final String value = json.readRequiredField("a", String.class);
-
-            assertThat(value).isEqualTo("x");
-        }
-    }
-
-    @Test
-    void readReplacingText_shouldThrow_whenValueIsNotObject() {
-        try (BufferedJson array = capture("[1]");
-                BufferedJson scalar = capture("\"text\"")) {
-            final Throwable fromArray = catchThrowable(() -> array.readReplacingText("a", "x", String.class));
-            final Throwable fromScalar = catchThrowable(() -> scalar.readReplacingText("a", "x", String.class));
-
-            assertThat(fromArray).isInstanceOf(DatabindException.class).hasMessageContaining("Expected an object");
-            assertThat(fromScalar).isInstanceOf(DatabindException.class).hasMessageContaining("Expected an object");
-        }
-    }
 }

@@ -12,10 +12,6 @@ import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.module.SimpleModule;
 
-/**
- * Jackson-backed {@link JsonCodec} for tests: snake_case names, unknown properties ignored, and {@link OptionalNull}
- * registered. {@link #with(Consumer)} adds the adapters a test needs.
- */
 public final class TestCodec implements JsonCodec {
 
     private static final TestCodec DEFAULTS = with(module -> {});

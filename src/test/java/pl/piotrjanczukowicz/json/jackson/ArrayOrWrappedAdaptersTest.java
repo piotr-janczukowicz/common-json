@@ -2,7 +2,6 @@ package pl.piotrjanczukowicz.json.jackson;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -34,15 +33,23 @@ class ArrayOrWrappedAdaptersTest {
     }
 
     @Test
-    void serialize_shouldWriteBothForms_whenEitherIsSet() {
-        assertSoftly(softly -> {
-            softly.assertThat(written(new Names(List.of("a"), null))).isEqualTo(List.of("a"));
-            softly.assertThat(written(new Names(null, List.of("a")))).isEqualTo(Map.of("items", List.of("a")));
-        });
+    void serialize_shouldWriteBareArray_whenArraySet() {
+        final Names names = new Names(List.of("a"), null);
+
+        final byte[] json = MAPPER.writeValueAsBytes(names);
+        final Object written = MAPPER.readValue(json, Object.class);
+
+        assertThat(written).isEqualTo(List.of("a"));
     }
 
-    private static Object written(final Names names) {
-        return MAPPER.readValue(MAPPER.writeValueAsBytes(names), Object.class);
+    @Test
+    void serialize_shouldWriteWrappedObject_whenWrappedSet() {
+        final Names names = new Names(null, List.of("a"));
+
+        final byte[] json = MAPPER.writeValueAsBytes(names);
+        final Object written = MAPPER.readValue(json, Object.class);
+
+        assertThat(written).isEqualTo(Map.of("items", List.of("a")));
     }
 
     @ParameterizedTest

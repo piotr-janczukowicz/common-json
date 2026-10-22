@@ -2,6 +2,7 @@ package pl.piotrjanczukowicz.json;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +34,7 @@ class OptionalNullTest {
     }
 
     @Test
-    void ofNull_shouldReturnNullValue_whenCalled() {
+    void ofNull_shouldReturnNullValue() {
         final OptionalNull<String> wrapper = OptionalNull.ofNull();
 
         assertThat(wrapper.value()).isNull();
@@ -112,7 +113,6 @@ class OptionalNullTest {
     @MethodSource("encodeCases")
     void encode_shouldWriteFields_whenFieldState(final Payload body, final Map<String, Object> expectedFields) {
         final byte[] json = CODEC.encode(body);
-
         final Map<?, ?> fields = CODEC.decode(json, Map.class);
 
         assertThat(fields).isEqualTo(expectedFields);
@@ -120,34 +120,47 @@ class OptionalNullTest {
 
     @Test
     void decode_shouldWrapValue_whenFieldPresent() {
-        final Payload payload = CODEC.decode("{\"field\":\"octocat\"}".getBytes(StandardCharsets.UTF_8), Payload.class);
+        final byte[] json = "{\"field\":\"octocat\"}".getBytes(StandardCharsets.UTF_8);
 
-        assertThat(payload.field()).isNotNull();
-        assertThat(payload.field().value()).isEqualTo("octocat");
+        final Payload payload = CODEC.decode(json, Payload.class);
+
+        assertSoftly(softly -> {
+            softly.assertThat(payload.field()).isNotNull();
+            softly.assertThat(payload.field().value()).isEqualTo("octocat");
+        });
     }
 
     @Test
     void decode_shouldWrapJsonNull_whenFieldNull() {
-        final Payload payload = CODEC.decode("{\"field\":null}".getBytes(StandardCharsets.UTF_8), Payload.class);
+        final byte[] json = "{\"field\":null}".getBytes(StandardCharsets.UTF_8);
 
-        assertThat(payload.field()).isNotNull();
-        assertThat(payload.field().value()).isNull();
+        final Payload payload = CODEC.decode(json, Payload.class);
+
+        assertSoftly(softly -> {
+            softly.assertThat(payload.field()).isNotNull();
+            softly.assertThat(payload.field().value()).isNull();
+        });
     }
 
     @Test
     void decode_shouldLeaveWrapperNull_whenFieldAbsent() {
-        final Payload payload = CODEC.decode("{}".getBytes(StandardCharsets.UTF_8), Payload.class);
+        final byte[] json = "{}".getBytes(StandardCharsets.UTF_8);
+
+        final Payload payload = CODEC.decode(json, Payload.class);
 
         assertThat(payload.field()).isNull();
     }
 
     @Test
     void decode_shouldWrapEnum_whenTypedOptionalNull() {
-        final EnumPayload payload =
-                CODEC.decode("{\"field\":\"ACTIVE\"}".getBytes(StandardCharsets.UTF_8), EnumPayload.class);
+        final byte[] json = "{\"field\":\"ACTIVE\"}".getBytes(StandardCharsets.UTF_8);
 
-        assertThat(payload.field()).isNotNull();
-        assertThat(payload.field().value()).isEqualTo(Sample.ACTIVE);
+        final EnumPayload payload = CODEC.decode(json, EnumPayload.class);
+
+        assertSoftly(softly -> {
+            softly.assertThat(payload.field()).isNotNull();
+            softly.assertThat(payload.field().value()).isEqualTo(Sample.ACTIVE);
+        });
     }
 
     @Test

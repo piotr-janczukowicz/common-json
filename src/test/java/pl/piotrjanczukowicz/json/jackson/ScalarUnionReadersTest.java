@@ -200,41 +200,47 @@ class ScalarUnionReadersTest {
     @Test
     void read_shouldThrow_whenJsonIsObject() {
         final JsonMapper mapper = JsonMapper.builder().build();
+        final Throwable thrown;
+
         try (JsonParser parser = mapper.createParser("{}")) {
             parser.nextToken();
 
-            final Throwable thrown =
+            thrown =
                     catchThrowable(() -> ScalarUnionReaders.read(parser, mock(DeserializationContext.class), OPTIONAL));
-
-            assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("must be scalar union");
         }
+
+        assertThat(thrown).isInstanceOf(DatabindException.class).hasMessageContaining("must be scalar union");
     }
 
     @Test
     void readRequired_shouldReturnValue_whenJsonIsString() {
         final JsonMapper mapper = JsonMapper.builder().build();
+        final String value;
+
         try (JsonParser parser = mapper.createParser("\"text\"")) {
             parser.nextToken();
 
-            final String value = ScalarUnionReaders.readRequired(parser, mock(DeserializationContext.class), REQUIRED);
-
-            assertThat(value).isEqualTo("text:text");
+            value = ScalarUnionReaders.readRequired(parser, mock(DeserializationContext.class), REQUIRED);
         }
+
+        assertThat(value).isEqualTo("text:text");
     }
 
     @Test
     void read_shouldThrow_whenRealParserReadsHugeExponent() {
         final JsonMapper mapper = JsonMapper.builder().build();
+        final Throwable thrown;
+
         try (JsonParser parser = mapper.createParser("1e999999999")) {
             parser.nextToken();
 
-            final Throwable thrown =
+            thrown =
                     catchThrowable(() -> ScalarUnionReaders.read(parser, mock(DeserializationContext.class), OPTIONAL));
-
-            assertThat(thrown)
-                    .isInstanceOf(DatabindException.class)
-                    .hasMessageContaining("number exponent is out of range");
         }
+
+        assertThat(thrown)
+                .isInstanceOf(DatabindException.class)
+                .hasMessageContaining("number exponent is out of range");
     }
 
     @Test

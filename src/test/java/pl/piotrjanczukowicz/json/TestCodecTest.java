@@ -13,14 +13,18 @@ class TestCodecTest {
 
     @Test
     void encode_shouldThrow_whenValueCannotBeWritten() {
-        final Throwable thrown = catchThrowable(() -> CODEC.encode(new Unwritable()));
+        final Unwritable value = new Unwritable();
+
+        final Throwable thrown = catchThrowable(() -> CODEC.encode(value));
 
         assertThat(thrown).isInstanceOf(JsonEncodeException.class).hasMessageContaining(Unwritable.class.getName());
     }
 
     @Test
     void decode_shouldThrow_whenJsonIsMalformed() {
-        final Throwable thrown = catchThrowable(() -> CODEC.decode("{".getBytes(StandardCharsets.UTF_8), Object.class));
+        final byte[] json = "{".getBytes(StandardCharsets.UTF_8);
+
+        final Throwable thrown = catchThrowable(() -> CODEC.decode(json, Object.class));
 
         assertThat(thrown).isInstanceOf(JsonDecodeException.class);
     }
@@ -28,16 +32,18 @@ class TestCodecTest {
     @Test
     void decode_shouldThrow_whenJsonTypeMismatches() {
         final JsonType<List<String>> type = JsonTypes.of(List.class, String.class);
+        final byte[] json = "{}".getBytes(StandardCharsets.UTF_8);
 
-        final Throwable thrown = catchThrowable(() -> CODEC.decode("{}".getBytes(StandardCharsets.UTF_8), type));
+        final Throwable thrown = catchThrowable(() -> CODEC.decode(json, type));
 
         assertThat(thrown).isInstanceOf(JsonDecodeException.class);
     }
 
     @Test
     void decode_shouldThrow_whenBodyIsNull() {
-        final Throwable thrown =
-                catchThrowable(() -> CODEC.decode("null".getBytes(StandardCharsets.UTF_8), Object.class));
+        final byte[] json = "null".getBytes(StandardCharsets.UTF_8);
+
+        final Throwable thrown = catchThrowable(() -> CODEC.decode(json, Object.class));
 
         assertThat(thrown).isInstanceOf(IllegalStateException.class);
     }
@@ -45,8 +51,9 @@ class TestCodecTest {
     @Test
     void decode_shouldThrow_whenGenericBodyIsNull() {
         final JsonType<List<String>> type = JsonTypes.of(List.class, String.class);
+        final byte[] json = "null".getBytes(StandardCharsets.UTF_8);
 
-        final Throwable thrown = catchThrowable(() -> CODEC.decode("null".getBytes(StandardCharsets.UTF_8), type));
+        final Throwable thrown = catchThrowable(() -> CODEC.decode(json, type));
 
         assertThat(thrown).isInstanceOf(IllegalStateException.class);
     }

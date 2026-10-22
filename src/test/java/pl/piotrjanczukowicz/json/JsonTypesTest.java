@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -14,22 +15,25 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class JsonTypesTest {
 
-    private static final class Holder {
-        @SuppressWarnings({"unused", "PMD.UnusedPrivateField"})
-        private List<String> names;
-    }
-
     @Test
     void of_shouldEqualSameClass_whenCalledTwice() {
-        assertThat(JsonTypes.of(String.class)).isEqualTo(JsonTypes.of(String.class));
+        final JsonType<String> first = JsonTypes.of(String.class);
+
+        final JsonType<String> second = JsonTypes.of(String.class);
+
+        assertThat(first).isEqualTo(second);
     }
 
     @Test
     void of_shouldBuildParameterizedType_whenRawAndArgumentProvided() {
         final JsonType<List<String>> type = JsonTypes.of(List.class, String.class);
 
-        assertThat(type.toString()).contains("List").contains("String");
-        assertThat(type).isNotEqualTo(JsonTypes.of(List.class));
+        final JsonType<?> raw = JsonTypes.of(List.class);
+
+        assertSoftly(softly -> {
+            softly.assertThat(type.toString()).contains("List").contains("String");
+            softly.assertThat(type).isNotEqualTo(raw);
+        });
     }
 
     @ParameterizedTest
@@ -43,6 +47,7 @@ class JsonTypesTest {
     @Test
     void listOf_shouldEqualJdkParameterizedType_whenSameRawAndArgument() throws Exception {
         final Type jdkType = Holder.class.getDeclaredField("names").getGenericType();
+
         final Type ours = JsonTypes.listOf(String.class).javaType();
 
         assertSoftly(softly -> {
@@ -88,33 +93,83 @@ class JsonTypesTest {
 
         assertSoftly(softly -> {
             softly.assertThat(first).isEqualTo(second).hasSameHashCodeAs(second);
-            softly.assertThat(first).isEqualTo(first).isNotEqualTo(null).isNotEqualTo("list");
-            softly.assertThat(first).isNotEqualTo(JsonTypes.listOf(Integer.class));
-            softly.assertThat(first.javaType()).isEqualTo(first.javaType()).isNotEqualTo(String.class);
-            softly.assertThat(first.javaType())
-                    .isNotEqualTo(JsonTypes.mapOf(String.class).javaType());
-            softly.assertThat(((ParameterizedType) first.javaType()).getOwnerType())
-                    .isNull();
-            softly.assertThat(first.javaType()).isNotEqualTo(ownedListOfString());
+            softly.assertThat(first.javaType()).isEqualTo(second.javaType()).isEqualTo(first.javaType());
+            softly.assertThat(first.javaType().hashCode())
+                    .isEqualTo(second.javaType().hashCode());
         });
     }
 
     @Test
-    void javaType_shouldPrintTypeName_whenParameterized() {
-        final Type listType = JsonTypes.listOf(String.class).javaType();
-        final Type mapType = JsonTypes.mapOf(Integer.class).javaType();
+    void listOf_shouldNotEqual_whenOtherIsNullOrNotAType() {
+        final JsonType<List<String>> type = JsonTypes.listOf(String.class);
 
         assertSoftly(softly -> {
-            softly.assertThat(listType).hasToString("java.util.List<java.lang.String>");
-            softly.assertThat(mapType).hasToString("java.util.Map<java.lang.String, java.lang.Integer>");
+            softly.assertThat(type).isEqualTo(type).isNotEqualTo(null).isNotEqualTo("list");
+            softly.assertThat(type.javaType()).isNotEqualTo(String.class);
         });
     }
 
     @Test
-    void mapOf_shouldDescribeStringKeys_whenCalled() {
+    void listOf_shouldNotEqual_whenElementTypeDiffers() {
+        final JsonType<List<String>> strings = JsonTypes.listOf(String.class);
+
+        final JsonType<List<Integer>> integers = JsonTypes.listOf(Integer.class);
+
+        assertThat(strings).isNotEqualTo(integers);
+    }
+
+    @Test
+    void listOf_shouldNotEqual_whenMapTypeGiven() {
+        final JsonType<List<String>> list = JsonTypes.listOf(String.class);
+
+        final Type map = JsonTypes.mapOf(String.class).javaType();
+
+        assertThat(list.javaType()).isNotEqualTo(map);
+    }
+
+    @Test
+    void listOf_shouldNotEqual_whenOwnerTypeIsSet() {
+        final JsonType<List<String>> list = JsonTypes.listOf(String.class);
+
+        final Type owned = ownedListOfString();
+
+        assertThat(list.javaType()).isNotEqualTo(owned);
+    }
+
+    @Test
+    void listOf_shouldHaveNoOwnerType() {
+        final JsonType<List<String>> list = JsonTypes.listOf(String.class);
+
+        final Type owner = ((ParameterizedType) list.javaType()).getOwnerType();
+
+        assertThat(owner).isNull();
+    }
+
+    @Test
+    void javaType_shouldPrintTypeName_whenList() {
+        final Type listType = JsonTypes.listOf(String.class).javaType();
+
+        assertThat(listType).hasToString("java.util.List<java.lang.String>");
+    }
+
+    @Test
+    void javaType_shouldPrintTypeName_whenMap() {
+        final Type mapType = JsonTypes.mapOf(Integer.class).javaType();
+
+        assertThat(mapType).hasToString("java.util.Map<java.lang.String, java.lang.Integer>");
+    }
+
+    @Test
+    void mapOf_shouldDescribeStringKeys() {
         final JsonType<Map<String, Integer>> type = JsonTypes.mapOf(Integer.class);
 
-        assertThat(type.toString()).contains("Map").contains("String").contains("Integer");
+        final String description = type.toString();
+
+        assertSoftly(softly -> {
+            softly.assertThat(description).contains("Map");
+            softly.assertThat(description).contains("String");
+            softly.assertThat(description).contains("Integer");
+        });
     }
 
     @Test
@@ -126,7 +181,7 @@ class JsonTypesTest {
 
     @Test
     void constructor_shouldRejectInstantiation_whenCalledViaReflection() throws Exception {
-        final var constructor = JsonTypes.class.getDeclaredConstructor();
+        final Constructor<JsonTypes> constructor = JsonTypes.class.getDeclaredConstructor();
         constructor.setAccessible(true);
 
         final Throwable thrown = catchThrowable(constructor::newInstance);
@@ -151,5 +206,10 @@ class JsonTypesTest {
                 return Map.class;
             }
         };
+    }
+
+    private static final class Holder {
+        @SuppressWarnings({"unused", "PMD.UnusedPrivateField"})
+        private List<String> names;
     }
 }

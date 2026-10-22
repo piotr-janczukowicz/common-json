@@ -3,7 +3,6 @@ package pl.piotrjanczukowicz.json;
 import static pl.piotrjanczukowicz.util.ValidationUtils.requireNonNull;
 
 import java.lang.reflect.Type;
-import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -27,7 +26,7 @@ public final class JsonType<T> {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(javaType);
+        return javaType.hashCode();
     }
 
     @Override

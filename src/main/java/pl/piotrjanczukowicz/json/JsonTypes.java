@@ -117,7 +117,7 @@ public final class JsonTypes {
         }
 
         @Override
-        public boolean equals(final Object other) {
+        public boolean equals(final @Nullable Object other) {
             return this == other
                     || other instanceof final ParameterizedType that
                             && raw.equals(that.getRawType())

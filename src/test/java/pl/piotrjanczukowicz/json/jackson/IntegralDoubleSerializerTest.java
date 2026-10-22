@@ -1,6 +1,7 @@
 package pl.piotrjanczukowicz.json.jackson;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import org.junit.jupiter.api.Test;
 import pl.piotrjanczukowicz.json.JsonCodec;
@@ -17,97 +18,142 @@ class IntegralDoubleSerializerTest {
 
     @Test
     void serialize_shouldWriteInteger_whenValueIsWhole() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(1.0)));
+        final Location location = new Location(1.0);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isTrue();
-        assertThat(encoded.get("line").asLong()).isEqualTo(1L);
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
+
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isTrue();
+            softly.assertThat(encoded.get("line").asLong()).isEqualTo(1L);
+        });
     }
 
     @Test
     void serialize_shouldKeepTheSign_whenValueIsNegativeZero() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(-0.0)));
+        final Location location = new Location(-0.0);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isFalse();
-        assertThat(encoded.get("line").asDouble()).isEqualTo(-0.0);
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
+
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isFalse();
+            softly.assertThat(encoded.get("line").asDouble()).isEqualTo(-0.0);
+        });
     }
 
     @Test
     void serialize_shouldWriteInteger_whenValueIsPositiveZero() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(0.0)));
+        final Location location = new Location(0.0);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isTrue();
-        assertThat(encoded.get("line").asLong()).isZero();
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
+
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isTrue();
+            softly.assertThat(encoded.get("line").asLong()).isZero();
+        });
     }
 
     @Test
     void serialize_shouldWriteDecimal_whenValueHasFraction() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(1.5)));
+        final Location location = new Location(1.5);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isFalse();
-        assertThat(encoded.get("line").asDouble()).isEqualTo(1.5);
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
+
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isFalse();
+            softly.assertThat(encoded.get("line").asDouble()).isEqualTo(1.5);
+        });
     }
 
     @Test
     void serialize_shouldWriteNonInteger_whenValueIsNaN() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(Double.NaN)));
+        final Location location = new Location(Double.NaN);
+
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
 
         assertThat(encoded.get("line").isIntegralNumber()).isFalse();
     }
 
     @Test
     void serialize_shouldWriteNonInteger_whenValueIsInfinite() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(Double.POSITIVE_INFINITY)));
+        final Location location = new Location(Double.POSITIVE_INFINITY);
+
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
 
         assertThat(encoded.get("line").isIntegralNumber()).isFalse();
     }
 
     @Test
     void serialize_shouldWriteNonInteger_whenValueExceedsLongRange() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(1.0e20)));
+        final Location location = new Location(1.0e20);
+
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
 
         assertThat(encoded.get("line").isIntegralNumber()).isFalse();
     }
 
     @Test
     void serialize_shouldWriteNonInteger_whenValueIsBelowLongRange() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(-1.0e20)));
+        final Location location = new Location(-1.0e20);
+
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
 
         assertThat(encoded.get("line").isIntegralNumber()).isFalse();
-    }
-
-    private static Location commit(final double line) {
-        return new Location(line);
     }
 
     @Test
     void serialize_shouldWriteNonInteger_whenValueIsExactlyTwoPow63() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(0x1p63)));
+        final Location location = new Location(0x1p63);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isFalse();
-        assertThat(encoded.get("line").asDouble()).isEqualTo(0x1p63);
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
+
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isFalse();
+            softly.assertThat(encoded.get("line").asDouble()).isEqualTo(0x1p63);
+        });
     }
 
     @Test
     void serialize_shouldWriteInteger_whenValueIsLargestDoubleBelowTwoPow63() {
         final double largest = Math.nextDown(0x1p63);
+        final Location location = new Location(largest);
 
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(largest)));
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isTrue();
-        assertThat(encoded.get("line").asLong()).isEqualTo((long) largest);
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isTrue();
+            softly.assertThat(encoded.get("line").asLong()).isEqualTo((long) largest);
+        });
     }
 
     @Test
     void serialize_shouldWriteInteger_whenValueIsExactlyMinusTwoPow63() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(-0x1p63)));
+        final Location location = new Location(-0x1p63);
 
-        assertThat(encoded.get("line").isIntegralNumber()).isTrue();
-        assertThat(encoded.get("line").asLong()).isEqualTo(Long.MIN_VALUE);
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
+
+        assertSoftly(softly -> {
+            softly.assertThat(encoded.get("line").isIntegralNumber()).isTrue();
+            softly.assertThat(encoded.get("line").asLong()).isEqualTo(Long.MIN_VALUE);
+        });
     }
 
     @Test
     void serialize_shouldWriteNonInteger_whenValueIsJustBelowMinusTwoPow63() {
-        final JsonNode encoded = TREE.readTree(CODEC.encode(commit(Math.nextDown(-0x1p63))));
+        final Location location = new Location(Math.nextDown(-0x1p63));
+
+        final byte[] json = CODEC.encode(location);
+        final JsonNode encoded = TREE.readTree(json);
 
         assertThat(encoded.get("line").isIntegralNumber()).isFalse();
     }

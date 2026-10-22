@@ -2,6 +2,7 @@ package pl.piotrjanczukowicz.json.jackson;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.jspecify.annotations.Nullable;
 import pl.piotrjanczukowicz.json.OptionalNull;
 
 /**
@@ -20,5 +21,5 @@ public interface OptionalNullMixin {
      * @return wrapped value
      */
     @JsonValue
-    Object value();
+    @Nullable Object value();
 }
