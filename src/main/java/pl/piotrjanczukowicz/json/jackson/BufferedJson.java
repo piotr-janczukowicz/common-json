@@ -3,6 +3,8 @@ package pl.piotrjanczukowicz.json.jackson;
 import java.util.List;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.databind.DatabindException;
@@ -15,6 +17,8 @@ import tools.jackson.databind.util.TokenBuffer;
  * {@link tools.jackson.databind.JsonNode} tree.
  */
 public final class BufferedJson implements AutoCloseable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BufferedJson.class);
 
     private final TokenBuffer buffer;
     private final DeserializationContext context;
@@ -126,6 +130,11 @@ public final class BufferedJson implements AutoCloseable {
         try {
             return fromWire.apply(value);
         } catch (final IllegalArgumentException unknown) {
+            LOG.atDebug()
+                    .setMessage("Rejected the value of field {}: {}")
+                    .addArgument(field)
+                    .addArgument(unknown.getMessage())
+                    .log();
             throw DatabindException.from(context, unknown.getMessage(), unknown);
         }
     }

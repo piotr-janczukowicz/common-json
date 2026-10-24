@@ -5,6 +5,8 @@ import static pl.piotrjanczukowicz.util.ValidationUtils.requireNonNull;
 
 import java.util.List;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
@@ -15,6 +17,8 @@ import tools.jackson.databind.ser.std.StdSerializer;
 
 /** Registers Jackson adapters that unwrap a sealed object union and pick a branch from a known JSON field. */
 public final class PolymorphicObjectAdapters {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PolymorphicObjectAdapters.class);
 
     private PolymorphicObjectAdapters() {
         throw new UnsupportedOperationException("Utility class");
@@ -124,8 +128,18 @@ public final class PolymorphicObjectAdapters {
         private T read(final BufferedJson json) {
             final int index = json.firstNonNull(fields);
             if (index < 0) {
+                LOG.atDebug()
+                        .setMessage("No branch of {} matched: none of the fields {} is present and not null")
+                        .addArgument(handledType().getSimpleName())
+                        .addArgument(fields)
+                        .log();
                 throw json.mismatch(unknownShape);
             }
+            LOG.atDebug()
+                    .setMessage("Reading {} through the branch selected by field {}")
+                    .addArgument(handledType().getSimpleName())
+                    .addArgument(fields.get(index))
+                    .log();
             return branches.get(index).readFrom(json);
         }
     }

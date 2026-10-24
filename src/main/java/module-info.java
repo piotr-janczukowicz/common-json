@@ -1,6 +1,7 @@
 module common.json {
     requires transitive tools.jackson.databind;
     requires common.util;
+    requires org.slf4j;
     requires static org.jspecify;
     requires static com.github.spotbugs.annotations;
 
