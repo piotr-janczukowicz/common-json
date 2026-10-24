@@ -7,9 +7,9 @@ import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ValueDeserializer;
 
 /**
- * Wraps Jackson's own map deserializer so element types are preserved, then copies the result into an immutable map.
+ * Wraps Jackson's own map deserializer so element types are preserved, then makes the result an unmodifiable map.
  *
- * <p>Entries with a null value are dropped. JSON {@code null} and absent properties are left to Jackson, so they stay
+ * <p>Entries with a null value are kept. JSON {@code null} and absent properties are left to Jackson, so they stay
  * {@code null}; an empty-value coercion becomes an empty immutable map.
  */
 final class ImmutableMapDeserializer extends ImmutableCollectionDeserializer {

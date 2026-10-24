@@ -81,24 +81,24 @@ class ImmutableCollectionsModuleTest {
     }
 
     @Test
-    void readValue_shouldDropNullElements_whenListContainsNull() {
+    void readValue_shouldKeepNullElements_whenListContainsNull() {
         final List<Item> items = MAPPER.readValue("[null,{\"name\":\"a\"}]", new TypeReference<>() {});
 
-        assertThat(items).containsExactly(new Item("a"));
+        assertThat(items).containsExactly(null, new Item("a"));
     }
 
     @Test
-    void readValue_shouldDropNullElements_whenSetContainsNull() {
+    void readValue_shouldKeepNullElements_whenSetContainsNull() {
         final Set<String> tags = MAPPER.readValue("[\"a\",null]", new TypeReference<>() {});
 
-        assertThat(tags).containsExactly("a");
+        assertThat(tags).containsExactlyInAnyOrder("a", null);
     }
 
     @Test
-    void readValue_shouldDropNullValues_whenMapContainsNull() {
+    void readValue_shouldKeepNullValues_whenMapContainsNull() {
         final Map<String, Integer> counts = MAPPER.readValue("{\"a\":1,\"b\":null}", new TypeReference<>() {});
 
-        assertThat(counts).containsExactly(Map.entry("a", 1));
+        assertThat(counts).hasSize(2).containsEntry("a", 1).containsEntry("b", null);
     }
 
     @Test

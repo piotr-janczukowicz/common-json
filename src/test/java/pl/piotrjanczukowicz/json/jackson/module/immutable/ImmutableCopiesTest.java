@@ -8,6 +8,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +53,20 @@ class ImmutableCopiesTest {
     }
 
     @Test
+    void list_shouldCopyElements_whenSourceIsNotAList() {
+        final List<String> result = ImmutableCopies.list(new LinkedHashSet<>(List.of("a", "b")));
+
+        assertThat(result).containsExactly("a", "b");
+    }
+
+    @Test
+    void set_shouldWrapSource_whenSourceIsASet() {
+        final Set<String> result = ImmutableCopies.set(new HashSet<>(List.of("a", "b")));
+
+        assertThat(result).containsExactlyInAnyOrder("a", "b");
+    }
+
+    @Test
     void map_shouldCopyEntries_whenSourceHasNoNulls() {
         final Map<String, Integer> source = new HashMap<>(Map.of("a", 1));
 
@@ -60,28 +76,28 @@ class ImmutableCopiesTest {
     }
 
     @Test
-    void list_shouldDropNulls_whenSourceHasNulls() {
+    void list_shouldKeepNulls_whenSourceHasNulls() {
         final List<String> result = ImmutableCopies.list(Arrays.asList("a", null, "b"));
 
-        assertThat(result).containsExactly("a", "b");
+        assertThat(result).containsExactly("a", null, "b");
     }
 
     @Test
-    void set_shouldDropNulls_whenSourceHasNulls() {
+    void set_shouldKeepNull_whenSourceHasNulls() {
         final Set<String> result = ImmutableCopies.set(Arrays.asList("a", null, "a"));
 
-        assertThat(result).containsExactly("a");
+        assertThat(result).containsExactly("a", null);
     }
 
     @Test
-    void map_shouldDropNullValues_whenSourceHasNullValues() {
+    void map_shouldKeepNullValues_whenSourceHasNullValues() {
         final Map<String, Integer> source = new HashMap<>();
         source.put("a", 1);
         source.put("b", null);
 
         final Map<String, Integer> result = ImmutableCopies.map(source);
 
-        assertThat(result).containsExactly(Map.entry("a", 1));
+        assertThat(result).hasSize(2).containsEntry("a", 1).containsEntry("b", null);
     }
 
     @Test

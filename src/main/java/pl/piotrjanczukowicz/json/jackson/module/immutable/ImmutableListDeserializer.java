@@ -8,10 +8,10 @@ import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ValueDeserializer;
 
 /**
- * Wraps Jackson's own list deserializer so element types are preserved, then copies the result into an immutable list.
+ * Wraps Jackson's own list deserializer so element types are preserved, then makes the result an unmodifiable list.
  *
- * <p>Null elements are dropped. JSON {@code null} and absent properties are left to Jackson, so they stay {@code null};
- * an empty-value coercion becomes an empty immutable list.
+ * <p>Null elements are kept. JSON {@code null} and absent properties are left to Jackson, so they stay {@code null}; an
+ * empty-value coercion becomes an empty immutable list.
  */
 final class ImmutableListDeserializer extends ImmutableCollectionDeserializer {
 

@@ -9,12 +9,12 @@ import tools.jackson.core.Version;
 import tools.jackson.databind.module.SimpleModule;
 
 /**
- * Jackson module that deserializes {@link List}, {@link Collection}, {@link Set}, and {@link Map} into immutable
+ * Jackson module that deserializes {@link List}, {@link Collection}, {@link Set}, and {@link Map} into unmodifiable
  * collections while keeping element types.
  *
  * <p>JSON {@code null} and absent properties stay {@code null}, so nullable fields keep their meaning. Null elements,
- * and map entries with a null value, are dropped. Iteration order of sets and maps is unspecified. This type does not
- * hold collection data.
+ * and map entries with a null value, are kept. Lists and maps keep the order of the JSON; the order of a set is
+ * unspecified. This type does not hold collection data.
  */
 public final class ImmutableCollectionsModule extends SimpleModule {
 
