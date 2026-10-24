@@ -2,12 +2,18 @@ package pl.piotrjanczukowicz.json.jackson.module.immutable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Single-pass immutable copies of Jackson-built collections that drop null elements and null map values. */
+/**
+ * Unmodifiable views of Jackson-built collections that keep null elements and null map values.
+ *
+ * <p>The sources are collections Jackson has just built and nobody else holds, so they are wrapped without a copy.
+ * Lists and maps keep the order of the JSON; the order of a set is unspecified.
+ */
 final class ImmutableCopies {
 
     private ImmutableCopies() {
@@ -18,54 +24,30 @@ final class ImmutableCopies {
         if (source.isEmpty()) {
             return List.of();
         }
-        if (hasNull(source)) {
-            return List.copyOf(withoutNulls(new ArrayList<>(source.size()), source));
+        if (source instanceof List<?>) {
+            @SuppressWarnings("unchecked")
+            final List<E> list = (List<E>) source;
+            return Collections.unmodifiableList(list);
         }
-        return List.copyOf(source);
+        return Collections.unmodifiableList(new ArrayList<>(source));
     }
 
     static <E> Set<E> set(final Collection<? extends E> source) {
         if (source.isEmpty()) {
             return Set.of();
         }
-        if (hasNull(source)) {
-            return Set.copyOf(withoutNulls(HashSet.newHashSet(source.size()), source));
+        if (source instanceof Set<?>) {
+            @SuppressWarnings("unchecked")
+            final Set<E> set = (Set<E>) source;
+            return Collections.unmodifiableSet(set);
         }
-        return Set.copyOf(source);
+        return Collections.unmodifiableSet(new LinkedHashSet<>(source));
     }
 
-    @SuppressWarnings("unchecked")
     static <K, V> Map<K, V> map(final Map<? extends K, ? extends V> source) {
         if (source.isEmpty()) {
             return Map.of();
         }
-        if (hasNull(source.values())) {
-            final List<Map.Entry<K, V>> kept = new ArrayList<>(source.size());
-            source.forEach((key, value) -> {
-                if (value != null) {
-                    kept.add(Map.entry(key, value));
-                }
-            });
-            return Map.ofEntries(kept.toArray(new Map.Entry[0]));
-        }
-        return Map.copyOf(source);
-    }
-
-    private static boolean hasNull(final Collection<?> source) {
-        for (final Object element : source) {
-            if (element == null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static <E, C extends Collection<E>> C withoutNulls(final C target, final Collection<? extends E> source) {
-        for (final E element : source) {
-            if (element != null) {
-                target.add(element);
-            }
-        }
-        return target;
+        return Collections.unmodifiableMap(source);
     }
 }
