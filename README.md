@@ -4,19 +4,19 @@ Shared JSON utilities for Java callers: a Jackson-free `JsonCodec` contract, an 
 
 ## Dependency
 
-Java library. Add Maven coordinates `pl.piotrjanczukowicz:common-json:1`.
+Java library. Add Maven coordinates `io.github.piotr-janczukowicz:common-json:4`.
 
 ```xml
 <dependency>
-  <groupId>pl.piotrjanczukowicz</groupId>
+  <groupId>io.github.piotr-janczukowicz</groupId>
   <artifactId>common-json</artifactId>
-  <version>1</version>
+  <version>4</version>
 </dependency>
 ```
 
 ## Usage
 
-The `pl.piotrjanczukowicz.json` package has no Jackson types: `JsonCodec` (decode and encode bytes), `JsonType` and `JsonTypes` (generic target types), `OptionalNull`, and the `JsonDecodeException` / `JsonEncodeException` failures. Implement `JsonCodec` over your own mapper; the contract is in its Javadoc. The adapters live in `pl.piotrjanczukowicz.json.jackson` and target Jackson 3 (`tools.jackson`). All of them register on a `SimpleModule`.
+The `io.github.piotr_janczukowicz.json` package has no Jackson types: `JsonCodec` (decode and encode bytes), `JsonType` and `JsonTypes` (generic target types), `OptionalNull`, and the `JsonDecodeException` / `JsonEncodeException` failures. Implement `JsonCodec` over your own mapper; the contract is in its Javadoc. The adapters live in `io.github.piotr_janczukowicz.json.jackson` and target Jackson 3 (`tools.jackson`). All of them register on a `SimpleModule`.
 
 ### OptionalNull
 
