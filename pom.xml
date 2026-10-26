@@ -14,7 +14,7 @@
   <packaging>jar</packaging>
 
   <name>common-json</name>
-  <description>Shared JSON utilities</description>
+  <description>A Jackson-free JsonCodec contract, an OptionalNull wrapper for PATCH-style payloads, and Jackson 3 adapters for union-shaped JSON</description>
   <url>https://github.com/piotr-janczukowicz/common-json</url>
 
   <properties>

@@ -4,13 +4,13 @@ Shared JSON utilities for Java callers: a Jackson-free `JsonCodec` contract, an 
 
 ## Dependency
 
-Java library. Add Maven coordinates `io.github.piotr-janczukowicz:common-json:1`.
+Java library. Add Maven coordinates `io.github.piotr-janczukowicz:common-json:4`.
 
 ```xml
 <dependency>
   <groupId>io.github.piotr-janczukowicz</groupId>
   <artifactId>common-json</artifactId>
-  <version>1</version>
+  <version>4</version>
 </dependency>
 ```
 
