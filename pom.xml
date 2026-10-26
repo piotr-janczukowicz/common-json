@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>pl.piotrjanczukowicz</groupId>
+    <groupId>io.github.piotr-janczukowicz</groupId>
     <artifactId>common-parent</artifactId>
-    <version>3</version>
+    <version>5-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -18,12 +18,12 @@
   <url>https://github.com/piotr-janczukowicz/common-json</url>
 
   <properties>
-    <common-util.version>5</common-util.version>
+    <common-util.version>6-SNAPSHOT</common-util.version>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>pl.piotrjanczukowicz</groupId>
+      <groupId>io.github.piotr-janczukowicz</groupId>
       <artifactId>common-util</artifactId>
       <version>${common-util.version}</version>
       <scope>compile</scope>

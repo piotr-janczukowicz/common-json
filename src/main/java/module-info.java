@@ -5,14 +5,14 @@ module common.json {
     requires static org.jspecify;
     requires static com.github.spotbugs.annotations;
 
-    exports pl.piotrjanczukowicz.json;
-    exports pl.piotrjanczukowicz.json.jackson;
-    exports pl.piotrjanczukowicz.json.jackson.module.immutable;
+    exports io.github.piotr_janczukowicz.json;
+    exports io.github.piotr_janczukowicz.json.jackson;
+    exports io.github.piotr_janczukowicz.json.jackson.module.immutable;
 
-    opens pl.piotrjanczukowicz.json to
+    opens io.github.piotr_janczukowicz.json to
             tools.jackson.databind;
-    opens pl.piotrjanczukowicz.json.jackson to
+    opens io.github.piotr_janczukowicz.json.jackson to
             tools.jackson.databind;
-    opens pl.piotrjanczukowicz.json.jackson.module.immutable to
+    opens io.github.piotr_janczukowicz.json.jackson.module.immutable to
             tools.jackson.databind;
 }
