@@ -1,6 +1,5 @@
 package io.github.piotr_janczukowicz.json.jackson;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.SerializationContext;
 import tools.jackson.databind.ser.std.StdSerializer;
@@ -22,9 +21,6 @@ public final class IntegralDoubleSerializer extends StdSerializer<Double> {
     }
 
     @Override
-    @SuppressFBWarnings(
-            value = "FE_FLOATING_POINT_EQUALITY",
-            justification = "integer-valued doubles are detected by exact conversion to long")
     public void serialize(final Double value, final JsonGenerator generator, final SerializationContext context) {
         final double number = value;
         if (Double.isFinite(number)

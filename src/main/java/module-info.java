@@ -3,7 +3,6 @@ module common.json {
     requires common.util;
     requires org.slf4j;
     requires static org.jspecify;
-    requires static com.github.spotbugs.annotations;
 
     exports io.github.piotr_janczukowicz.json;
     exports io.github.piotr_janczukowicz.json.jackson;
