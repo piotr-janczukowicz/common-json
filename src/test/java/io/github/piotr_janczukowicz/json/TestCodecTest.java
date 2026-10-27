@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 class TestCodecTest {
 
-    private static final JsonCodec CODEC = TestCodec.defaults();
+    private static final JsonCodec CODEC = JsonTestCodec.defaults();
 
     @Test
     void encode_shouldThrow_whenValueCannotBeWritten() {

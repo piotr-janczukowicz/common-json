@@ -65,7 +65,7 @@ class ScalarUnionReadersTest {
     void read_shouldReturnNumber_whenJsonIsInteger() {
         final JsonParser parser = mock(JsonParser.class);
         when(parser.currentToken()).thenReturn(JsonToken.VALUE_NUMBER_INT);
-        when(parser.getDecimalValue()).thenReturn(new BigDecimal("2"));
+        when(parser.getDecimalValue()).thenReturn(BigDecimal.valueOf(2));
 
         final String decoded = ScalarUnionReaders.read(parser, mock(DeserializationContext.class), OPTIONAL);
 
