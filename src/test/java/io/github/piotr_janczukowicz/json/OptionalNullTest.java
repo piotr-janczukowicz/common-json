@@ -17,7 +17,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class OptionalNullTest {
 
-    private static final JsonCodec CODEC = TestCodec.defaults();
+    private static final JsonCodec CODEC = JsonTestCodec.defaults();
 
     @Test
     void of_shouldReturnWrappedValue_whenNonNull() {

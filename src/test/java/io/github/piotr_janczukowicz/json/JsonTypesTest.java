@@ -209,7 +209,7 @@ class JsonTypesTest {
     }
 
     private static final class Holder {
-        @SuppressWarnings({"unused", "PMD.UnusedPrivateField"})
+        @SuppressWarnings("unused")
         private List<String> names;
     }
 }

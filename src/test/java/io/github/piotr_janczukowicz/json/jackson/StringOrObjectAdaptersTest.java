@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.github.piotr_janczukowicz.json.JsonCodec;
+import io.github.piotr_janczukowicz.json.JsonTestCodec;
 import io.github.piotr_janczukowicz.json.OptionalNull;
-import io.github.piotr_janczukowicz.json.TestCodec;
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -20,7 +20,7 @@ import tools.jackson.core.type.TypeReference;
 
 class StringOrObjectAdaptersTest {
 
-    private static final JsonCodec CODEC = TestCodec.with(module -> {
+    private static final JsonCodec CODEC = JsonTestCodec.with(module -> {
         StringOrObjectAdapters.register(
                 module, Label.class, Label::name, Label::details, Label::ofName, Label::ofDetails, LabelDetails.class);
         StringOrObjectAdapters.register(

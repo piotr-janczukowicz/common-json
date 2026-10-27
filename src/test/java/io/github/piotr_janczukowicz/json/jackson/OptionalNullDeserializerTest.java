@@ -10,10 +10,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.github.piotr_janczukowicz.json.JsonCodec;
 import io.github.piotr_janczukowicz.json.JsonDecodeException;
+import io.github.piotr_janczukowicz.json.JsonTestCodec;
 import io.github.piotr_janczukowicz.json.JsonType;
 import io.github.piotr_janczukowicz.json.JsonTypes;
 import io.github.piotr_janczukowicz.json.OptionalNull;
-import io.github.piotr_janczukowicz.json.TestCodec;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
@@ -23,15 +23,15 @@ import tools.jackson.databind.DeserializationContext;
 
 class OptionalNullDeserializerTest {
 
-    private static final JsonCodec CODEC = TestCodec.defaults();
-    private static final JsonType<OptionalNull<String>> STRING_OPTIONAL_NULL =
+    private static final JsonCodec CODEC = JsonTestCodec.defaults();
+    private static final JsonType<OptionalNull<String>> NULLABLE_STRING =
             JsonTypes.of(OptionalNull.class, String.class);
 
     @Test
     void decode_shouldWrapValue_whenRootOptionalNullPresent() {
         final byte[] json = "\"octocat\"".getBytes(StandardCharsets.UTF_8);
 
-        final OptionalNull<String> decoded = CODEC.decode(json, STRING_OPTIONAL_NULL);
+        final OptionalNull<String> decoded = CODEC.decode(json, NULLABLE_STRING);
 
         assertThat(decoded.value()).isEqualTo("octocat");
     }
@@ -40,7 +40,7 @@ class OptionalNullDeserializerTest {
     void decode_shouldWrapJsonNull_whenRootOptionalNullNull() {
         final byte[] json = "null".getBytes(StandardCharsets.UTF_8);
 
-        final OptionalNull<String> decoded = CODEC.decode(json, STRING_OPTIONAL_NULL);
+        final OptionalNull<String> decoded = CODEC.decode(json, NULLABLE_STRING);
 
         assertThat(decoded.value()).isNull();
     }
@@ -164,16 +164,22 @@ class OptionalNullDeserializerTest {
     record ListPayload(@Nullable OptionalNull<List<String>> field) {}
 
     private enum Color {
-        RED;
+        RED("red");
+
+        private final String wire;
+
+        Color(final String wire) {
+            this.wire = wire;
+        }
 
         @JsonValue
         String wire() {
-            return "red";
+            return wire;
         }
 
         @JsonCreator
         static Color fromWire(final String value) {
-            if ("red".equals(value)) {
+            if (RED.wire.equals(value)) {
                 return RED;
             }
             throw new IllegalArgumentException("unknown color " + value);

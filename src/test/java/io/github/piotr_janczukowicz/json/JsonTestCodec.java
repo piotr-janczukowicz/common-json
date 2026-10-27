@@ -16,26 +16,26 @@ import tools.jackson.databind.module.SimpleModule;
  * Jackson-backed {@link JsonCodec} for tests: snake_case names, unknown properties ignored, and {@link OptionalNull}
  * registered. {@link #with(Consumer)} adds the adapters a test needs.
  */
-public final class TestCodec implements JsonCodec {
+public final class JsonTestCodec implements JsonCodec {
 
-    private static final TestCodec DEFAULTS = with(module -> {});
+    private static final JsonTestCodec DEFAULTS = with(module -> {});
 
     private final JsonMapper mapper;
 
-    private TestCodec(final JsonMapper mapper) {
+    private JsonTestCodec(final JsonMapper mapper) {
         this.mapper = mapper;
     }
 
-    public static TestCodec defaults() {
+    public static JsonTestCodec defaults() {
         return DEFAULTS;
     }
 
-    public static TestCodec with(final Consumer<SimpleModule> customizer) {
+    public static JsonTestCodec with(final Consumer<SimpleModule> customizer) {
         final SimpleModule module = new SimpleModule();
         module.addDeserializer(OptionalNull.class, new OptionalNullDeserializer());
         module.setMixInAnnotation(OptionalNull.class, OptionalNullMixin.class);
         customizer.accept(module);
-        return new TestCodec(JsonMapper.builder()
+        return new JsonTestCodec(JsonMapper.builder()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)

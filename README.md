@@ -1,3 +1,9 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/3509395ba69245cea505519869c78870)](https://app.codacy.com/gh/piotr-janczukowicz/common-json/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/3509395ba69245cea505519869c78870)](https://app.codacy.com/gh/piotr-janczukowicz/common-json/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
+[![Build](https://github.com/piotr-janczukowicz/common-json/actions/workflows/main.yml/badge.svg)](https://github.com/piotr-janczukowicz/common-json/actions/workflows/main.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.piotr-janczukowicz/common-json)](https://central.sonatype.com/artifact/io.github.piotr-janczukowicz/common-json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Java 21](https://img.shields.io/badge/Java-21-orange.svg)
 # common-json
 
 Shared JSON utilities for Java callers: a Jackson-free `JsonCodec` contract, an `OptionalNull` wrapper for PATCH-style payloads, and Jackson 3 adapters for union-shaped JSON.

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 
 import io.github.piotr_janczukowicz.json.JsonCodec;
-import io.github.piotr_janczukowicz.json.TestCodec;
+import io.github.piotr_janczukowicz.json.JsonTestCodec;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.annotation.JsonSerialize;
@@ -12,7 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 class IntegralDoubleSerializerTest {
 
-    private static final JsonCodec CODEC = TestCodec.defaults();
+    private static final JsonCodec CODEC = JsonTestCodec.defaults();
 
     private static final JsonMapper TREE = JsonMapper.builder().build();
 
