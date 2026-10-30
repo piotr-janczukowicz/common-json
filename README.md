@@ -6,17 +6,19 @@
 ![Java 21](https://img.shields.io/badge/Java-21-orange.svg)
 # common-json
 
-Shared JSON utilities for Java callers: a Jackson-free `JsonCodec` contract, an `OptionalNull` wrapper for PATCH-style payloads, and Jackson 3 adapters for union-shaped JSON.
+JSON building blocks for the `io.github.piotr-janczukowicz` libraries and any Java 21 project that uses Jackson 3: a
+Jackson-free `JsonCodec` contract, an `OptionalNull` wrapper for PATCH-style payloads, Jackson adapters for union-shaped
+JSON, a module that reads collections as immutable ones, and a serializer that writes `5.0` as `5`.
 
-## Dependency
-
-Java library. Add Maven coordinates `io.github.piotr-janczukowicz:common-json:5`.
+**Requirements:** Java 21 and Jackson 3 (`tools.jackson`). The library is a Java module, `common.json`, and also works on the
+class path. It is published on
+[Maven Central](https://central.sonatype.com/artifact/io.github.piotr-janczukowicz/common-json):
 
 ```xml
 <dependency>
   <groupId>io.github.piotr-janczukowicz</groupId>
   <artifactId>common-json</artifactId>
-  <version>5</version>
+  <version>8</version>
 </dependency>
 ```
 
@@ -66,10 +68,20 @@ Every `register` method rejects a `null` argument when `register` is called. A u
 JsonMapper mapper = JsonMapper.builder().addModule(new ImmutableCollectionsModule()).build();
 ```
 
+### Integral doubles
+
+`IntegralDoubleSerializer` writes a `Double` without a fractional part as a JSON integer (`5.0` becomes `5`) and every other
+value, including `NaN`, infinities, negative zero and values beyond the `long` range, as an ordinary number. Register it with
+`module.addSerializer(Double.class, new IntegralDoubleSerializer())`.
+
 ### Mapper expectations
 
 Do not enable default typing on a mapper that reads untrusted JSON. Keep Jackson's `StreamReadConstraints` at their defaults or tighter: they bound the size of numbers, and `ScalarUnionReaders` additionally rejects a number with an exponent beyond 1000 decimal places.
 
+## Security
+
+See [SECURITY.md](SECURITY.md) to report a vulnerability.
+
 ## License
 
-MIT License
+See [LICENSE](LICENSE).
