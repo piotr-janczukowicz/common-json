@@ -15,6 +15,11 @@
       <username>${env.GITHUB_ACTOR}</username>
       <password>${env.PACKAGES_TOKEN}</password>
     </server>
+    <server>
+      <id>github-common-util</id>
+      <username>${env.GITHUB_ACTOR}</username>
+      <password>${env.PACKAGES_TOKEN}</password>
+    </server>
   </servers>
   <profiles>
     <profile>
@@ -23,6 +28,10 @@
         <repository>
           <id>github-common-parent</id>
           <url>https://maven.pkg.github.com/piotr-janczukowicz/common-parent</url>
+        </repository>
+        <repository>
+          <id>github-common-util</id>
+          <url>https://maven.pkg.github.com/piotr-janczukowicz/common-util</url>
         </repository>
       </repositories>
       <pluginRepositories>
